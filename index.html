@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurdistan Live Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --bg-body: #050505;
+            --bg-sidebar: #0f1014;
+            --bg-active: #1e2029;
+            --accent: #3b82f6;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --border: #1f1f22;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar / Channel List --- */
+        .sidebar {
+            width: 300px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .channel-list {
+            list-style: none;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+
+        .channel-item:hover {
+            background-color: var(--bg-active);
+        }
+
+        .channel-item.active {
+            background-color: var(--bg-active);
+            border-color: var(--accent);
+        }
+
+        .channel-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            background-color: #2a2a2a; 
+        }
+
+        .channel-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .channel-info {
+            display: flex;
+            flex-direction: column;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .channel-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .live-status {
+            font-size: 0.75rem;
+            color: #ef4444;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #ef4444;
+            border-radius: 50%;
+        }
+
+        /* --- Main Player Area --- */
+        .main-stage {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #1a1c22 0%, #050505 100%);
+            padding: 2rem;
+        }
+
+        .player-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            aspect-ratio: 16/9;
+            background-color: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        video, iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* --- Mobile Responsive Design --- */
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .sidebar-header { display: none; }
+
+            .channel-list {
+                flex-direction: row;
+                padding: 1rem;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+            }
+
+            .channel-item {
+                min-width: 200px;
+                scroll-snap-align: start;
+            }
+
+            .main-stage {
+                padding: 1rem;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Live Channels</h2>
+        </div>
+        <ul class="channel-list" id="channelList">
+            </ul>
+    </aside>
+
+    <main class="main-stage">
+        <div class="player-wrapper" id="playerContainer">
+        </div>
+    </main>
+
+    <script>
+        // --- Channel Data with Logos ---
+        const channels = [
+            {
+                id: 'rudaw',
+                name: 'Rudaw',
+                type: 'hls',
+                url: 'https://svs.itworkscdn.net/rudawlive/rudawlive.smil/playlist.m3u8',
+                logoImage: 'image_0.png'
+            },
+            {
+                id: 'ronahi',
+                name: 'Ronahi TV',
+                type: 'hls',
+                url: 'https://hlspackager.akamaized.net/live/DB/RONAHI_TV/HLS/RONAHI_TV.m3u8',
+                logoImage: 'image_3.png'
+            },
+            {
+                id: 'channel8',
+                name: 'Channel 8',
+                type: 'hls',
+                url: 'https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8',
+                logoImage: 'image_4.png'
+            },
+            {
+                id: 'ava',
+                name: 'Ava Media',
+                type: 'iframe',
+                htmlContent: `<iframe allow="fullscreen" src="https://avamedia.live" frameborder="0" scrolling="no" title="Live Stream" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" style="width: 100%; height: 100%;"></iframe>`,
+                logoImage: 'image_1.png'
+            },
+            {
+                id: 'shams',
+                name: 'Shams TV',
+                type: 'hls',
+                url: 'https://stream.shams.tv/hls/0/stream.m3u8',
+                logoImage: 'image_2.png'
+            }
+        ];
+
+        let hlsInstance = null;
+
+        const channelListEl = document.getElementById('channelList');
+        const playerContainer = document.getElementById('playerContainer');
+
+        // --- Render Sidebar ---
+        function renderSidebar() {
+            channelListEl.innerHTML = '';
+            channels.forEach((channel, index) => {
+                const li = document.createElement('li');
+                li.className = 'channel-item';
+                li.onclick = () => playChannel(index);
+                li.id = `ch-btn-${index}`;
+
+                li.innerHTML = `
+                    <div class="channel-logo">
+                        <img src="${channel.logoImage}" alt="${channel.name} Logo">
+                    </div>
+                    <div class="channel-info">
+                        <span class="channel-name">${channel.name}</span>
+                        <span class="live-status"><span class="live-dot"></span> Live</span>
+                    </div>
+                `;
+                channelListEl.appendChild(li);
+            });
+        }
+
+        // --- Play Channel Logic ---
+        function playChannel(index) {
+            const channel = channels[index];
+
+            // Update UI
+            document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
+            const activeBtn = document.getElementById(`ch-btn-${index}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Cleanup previous player
+            if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsInstance = null;
+            }
+            playerContainer.innerHTML = '';
+
+            // Load New Player
+            if (channel.type === 'iframe') {
+                playerContainer.innerHTML = channel.htmlContent;
+            } 
+            else if (channel.type === 'hls') {
+                const video = document.createElement('video');
+                video.controls = true;
+                video.autoplay = true;
+                video.playsInline = true;
+                
+                playerContainer.appendChild(video);
+
+                if (Hls.isSupported()) {
+                    hlsInstance = new Hls();
+                    hlsInstance.loadSource(channel.url);
+                    hlsInstance.attachMedia(video);
+                    hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                        video.play().catch(() => console.log("Autoplay blocked"));
+                    });
+                }
+                else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = channel.url;
+                    video.addEventListener('loadedmetadata', function() {
+                        video.play();
+                    });
+                }
+            }
+        }
+
+        // --- Init ---
+        renderSidebar();
+        playChannel(0);
+
+    </script>
+</body>
+</html>
