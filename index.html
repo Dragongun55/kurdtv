@@ -5,316 +5,358 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kurdistan Live Hub</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-body: #050505;
-            --bg-sidebar: #0f1014;
-            --bg-active: #1e2029;
-            --accent: #3b82f6;
-            --text-main: #ffffff;
-            --text-muted: #888888;
-            --border: #1f1f22;
+            --bg:#070810;--bg2:#0c0e1a;--bg3:#111422;--bg4:#181c2e;--surface:#1d2138;
+            --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+            --tv:#60a5fa;--tv-glow:rgba(96,165,250,0.14);--tv-dim:rgba(96,165,250,0.07);
+            --radio:#fb923c;--radio-glow:rgba(251,146,60,0.14);--radio-dim:rgba(251,146,60,0.07);
+            --text:#e8eaf6;--text2:#8b90b0;--text3:#4b5070;--red:#f87171;
         }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html,body{height:100%;overflow:hidden}
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);display:flex}
+        body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* SIDEBAR */
+        .sidebar{width:272px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+        .sb-top{padding:1.35rem 1.35rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem}
+        .brand-gem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#60a5fa 0%,#818cf8 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .brand-gem svg{width:16px;height:16px;color:#fff}
+        .brand-name{font-weight:800;font-size:.92rem;letter-spacing:-.01em;line-height:1;color:var(--text)}
+        .brand-tag{font-size:.62rem;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
+        .tabs{display:flex;margin:.9rem;background:var(--bg3);border-radius:10px;padding:3px;border:1px solid var(--border);position:relative}
+        .tab-pill{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:8px;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.3);transition:transform .28s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:0}
+        .tab-pill.s{transform:translateX(100%)}
+        .tab-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.52rem .5rem;border:none;background:transparent;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.76rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);transition:color .2s;position:relative;z-index:1}
+        .tab-btn svg{width:13px;height:13px}
+        .tab-btn.on-tv{color:var(--tv)}
+        .tab-btn.on-radio{color:var(--radio)}
 
-        /* --- Sidebar / Channel List --- */
-        .sidebar {
-            width: 300px;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            z-index: 10;
-        }
+        .ch-scroll{flex:1;overflow-y:auto;padding:.4rem .65rem 1rem}
+        .ch-scroll::-webkit-scrollbar{width:2px}
+        .ch-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+        .list-lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:.7rem .5rem .3rem}
+        .ch-ul{list-style:none;display:flex;flex-direction:column;gap:1px}
+        .chi{display:flex;align-items:center;gap:.75rem;padding:.6rem .7rem;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:background .14s,border-color .14s,transform .1s}
+        .chi:hover{background:var(--bg3);transform:translateX(3px)}
+        .chi.stv{background:var(--tv-dim);border-color:rgba(96,165,250,.22)}
+        .chi.srd{background:var(--radio-dim);border-color:rgba(251,146,60,.22)}
+        .ch-logo{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center}
+        .ch-logo img{width:100%;height:100%;object-fit:cover}
+        .ch-abbr{font-family:'Outfit',sans-serif;font-size:.68rem;font-weight:800;color:var(--radio);text-align:center;line-height:1.15;padding:2px}
+        .ch-meta{flex:1;overflow:hidden}
+        .ch-name{font-weight:600;font-size:.845rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+        .ch-sub{font-size:.65rem;color:var(--text3);margin-top:1px;display:flex;align-items:center;gap:4px}
+        .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex-shrink:0;animation:blink 1.6s ease-in-out infinite}
+        .dot-r{background:var(--radio)}
+        .lbl-live{color:var(--red);font-weight:700;letter-spacing:.04em}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
-        .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
+        /* MAIN */
+        .main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+        .glow{position:absolute;border-radius:50%;pointer-events:none;filter:blur(90px);transition:all .5s}
+        .g1{width:500px;height:350px;top:-100px;right:50px;background:radial-gradient(circle,rgba(96,165,250,.055) 0%,transparent 70%)}
+        .g2{width:350px;height:350px;bottom:-60px;left:20px;background:radial-gradient(circle,rgba(129,140,248,.04) 0%,transparent 70%)}
+        .main.radio .g1{background:radial-gradient(circle,rgba(251,146,60,.065) 0%,transparent 70%)}
+        .main.radio .g2{background:radial-gradient(circle,rgba(251,146,60,.035) 0%,transparent 70%)}
 
-        .sidebar-header h2 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
+        /* TOPBAR */
+        .topbar{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.4rem;gap:.9rem;background:rgba(7,8,16,.55);backdrop-filter:blur(16px);position:relative;z-index:5;flex-shrink:0}
+        .tb-logo{width:26px;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4);border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+        .tb-logo img{width:100%;height:100%;object-fit:cover}
+        .tb-logo-txt{font-size:.58rem;font-weight:800;color:var(--radio);text-align:center}
+        .tb-name{font-weight:700;font-size:.88rem;color:var(--text)}
+        .tb-badge{display:flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+        .b-live{background:rgba(248,113,113,.08);color:var(--red);border:1px solid rgba(248,113,113,.18)}
+        .b-onair{background:var(--radio-dim);color:var(--radio);border:1px solid rgba(251,146,60,.2);display:none}
+        .tb-sp{flex:1}
 
-        .channel-list {
-            list-style: none;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            overflow-y: auto;
-        }
+        /* STAGE */
+        .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem 2rem;overflow:hidden;position:relative}
 
-        .channel-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: transparent;
-            border: 1px solid transparent;
-        }
+        /* TV */
+        .tv-wrap{width:100%;max-width:1100px;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--border2),0 32px 72px rgba(0,0,0,.65),0 0 100px var(--tv-glow)}
+        .tv-wrap video,.tv-wrap iframe{width:100%;height:100%;border:none;display:block}
 
-        .channel-item:hover {
-            background-color: var(--bg-active);
-        }
+        /* RADIO orb */
+        .radio-wrap{display:none;flex-direction:column;align-items:center;gap:2.2rem;width:100%;max-width:420px}
+        .orb-scene{position:relative;display:flex;align-items:center;justify-content:center}
+        .wave{position:absolute;border-radius:50%;border:1px solid rgba(251,146,60,.12);animation:wave 3s ease-out infinite;opacity:0}
+        .wave.w1{width:190px;height:190px;animation-delay:0s}
+        .wave.w2{width:255px;height:255px;animation-delay:.85s}
+        .wave.w3{width:320px;height:320px;animation-delay:1.7s}
+        .wave.stop{animation-play-state:paused;opacity:0}
+        @keyframes wave{0%{transform:scale(.88);opacity:.55}100%{transform:scale(1.04);opacity:0}}
+        .orb{width:155px;height:155px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(251,146,60,.05);transition:box-shadow .35s}
+        .orb.on{box-shadow:0 0 70px rgba(251,146,60,.22),0 0 0 1px rgba(251,146,60,.28)}
+        .orb-inner{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+        .orb-inner img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+        .orb-txt{font-family:'Outfit',sans-serif;font-size:1.35rem;font-weight:900;color:var(--radio)}
+        .st-name{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1;text-align:center}
+        .st-genre{font-size:.78rem;color:var(--text3);margin-top:.35rem;letter-spacing:.06em;text-transform:uppercase;text-align:center}
+        .r-ctrls{display:flex;align-items:center;gap:1.1rem}
+        .vol-row{display:flex;align-items:center;gap:.45rem;color:var(--text3)}
+        .vol-row svg{width:15px;height:15px;flex-shrink:0}
+        .vol-range{-webkit-appearance:none;width:88px;height:3px;background:var(--surface);border-radius:3px;outline:none;cursor:pointer}
+        .vol-range::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--radio);border-radius:50%;cursor:pointer;box-shadow:0 0 6px rgba(251,146,60,.4)}
+        .play-btn{width:56px;height:56px;border-radius:50%;background:var(--radio);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 6px 22px rgba(251,146,60,.35);transition:transform .18s,box-shadow .18s}
+        .play-btn:hover{transform:scale(1.08);box-shadow:0 8px 30px rgba(251,146,60,.5)}
+        .play-btn:active{transform:scale(.96)}
+        .play-btn svg{width:21px;height:21px}
 
-        .channel-item.active {
-            background-color: var(--bg-active);
-            border-color: var(--accent);
-        }
+        /* RADIO iframe */
+        .radio-iframe{display:none;width:100%;max-width:500px;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--border2),0 24px 56px rgba(0,0,0,.55),0 0 80px var(--radio-glow)}
+        .radio-iframe iframe{display:block;width:100%;border:none}
 
-        .channel-logo {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            overflow: hidden;
-            flex-shrink: 0;
-            background-color: #2a2a2a; 
-        }
+        /* Visibility */
+        .main.radio .tv-wrap{display:none}
+        .main.radio .radio-wrap{display:flex}
+        .main.radio.iframed .radio-wrap{display:none}
+        .main.radio.iframed .radio-iframe{display:block}
 
-        .channel-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .channel-info {
-            display: flex;
-            flex-direction: column;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .channel-name {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .live-status {
-            font-size: 0.75rem;
-            color: #ef4444;
-            margin-top: 2px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
-        }
-
-        .live-dot {
-            width: 6px;
-            height: 6px;
-            background-color: #ef4444;
-            border-radius: 50%;
-        }
-
-        /* --- Main Player Area --- */
-        .main-stage {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle at center, #1a1c22 0%, #050505 100%);
-            padding: 2rem;
-        }
-
-        .player-wrapper {
-            width: 100%;
-            max-width: 1100px;
-            aspect-ratio: 16/9;
-            background-color: #000;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            position: relative;
-        }
-
-        video, iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* --- Mobile Responsive Design --- */
-        @media (max-width: 900px) {
-            body { flex-direction: column; }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-                flex-direction: row;
-                border-right: none;
-                border-bottom: 1px solid var(--border);
-            }
-
-            .sidebar-header { display: none; }
-
-            .channel-list {
-                flex-direction: row;
-                padding: 1rem;
-                overflow-x: auto;
-                scroll-snap-type: x mandatory;
-            }
-
-            .channel-item {
-                min-width: 200px;
-                scroll-snap-align: start;
-            }
-
-            .main-stage {
-                padding: 1rem;
-                align-items: flex-start;
-            }
+        /* MOBILE */
+        @media(max-width:840px){
+            body{flex-direction:column}
+            .sidebar{width:100%;height:auto;flex-direction:row;border-right:none;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+            .sb-top{display:none}
+            .tabs{margin:.6rem;flex-shrink:0}
+            .ch-scroll{display:flex;flex-direction:row;padding:.5rem .5rem .5rem 0;overflow-y:hidden}
+            .list-lbl{display:none}
+            .ch-ul{flex-direction:row;gap:3px}
+            .chi{min-width:148px}
+            .stage{padding:1rem}
         }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>Live Channels</h2>
+<aside class="sidebar">
+    <div class="sb-top">
+        <div class="brand-gem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
         </div>
-        <ul class="channel-list" id="channelList">
-            </ul>
-    </aside>
-
-    <main class="main-stage">
-        <div class="player-wrapper" id="playerContainer">
+        <div>
+            <div class="brand-name">Kurdistan Live</div>
+            <div class="brand-tag">Media Hub</div>
         </div>
-    </main>
+    </div>
 
-    <script>
-        // --- Channel Data with Logos ---
-        const channels = [
-            {
-                id: 'rudaw',
-                name: 'Rudaw',
-                type: 'hls',
-                url: 'https://svs.itworkscdn.net/rudawlive/rudawlive.smil/playlist.m3u8',
-                logoImage: 'image_0.png'
-            },
-            {
-                id: 'ronahi',
-                name: 'Ronahi TV',
-                type: 'hls',
-                url: 'https://hlspackager.akamaized.net/live/DB/RONAHI_TV/HLS/RONAHI_TV.m3u8',
-                logoImage: 'image_3.png'
-            },
-            {
-                id: 'channel8',
-                name: 'Channel 8',
-                type: 'hls',
-                url: 'https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8',
-                logoImage: 'image_4.png'
-            },
-            {
-                id: 'ava',
-                name: 'Ava Media',
-                type: 'iframe',
-                htmlContent: `<iframe allow="fullscreen" src="https://avamedia.live" frameborder="0" scrolling="no" title="Live Stream" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" style="width: 100%; height: 100%;"></iframe>`,
-                logoImage: 'image_1.png'
-            },
-            {
-                id: 'shams',
-                name: 'Shams TV',
-                type: 'hls',
-                url: 'https://stream.shams.tv/hls/0/stream.m3u8',
-                logoImage: 'image_2.png'
-            }
-        ];
+    <div class="tabs">
+        <div class="tab-pill" id="pill"></div>
+        <button class="tab-btn on-tv" id="tvBtn" onclick="switchTo('tv')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>TV
+        </button>
+        <button class="tab-btn" id="rdBtn" onclick="switchTo('radio')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.5 17a24.12 24.12 0 0 1 0-10"/><path d="M5.5 13.7a10 10 0 0 1 0-3.4"/><circle cx="12" cy="12" r="2"/><path d="M18.5 13.7a10 10 0 0 0 0-3.4"/><path d="M21.5 17a24.12 24.12 0 0 0 0-10"/>
+            </svg>Radio
+        </button>
+    </div>
 
-        let hlsInstance = null;
+    <div class="ch-scroll" id="tvPane">
+        <div class="list-lbl">Channels</div>
+        <ul class="ch-ul" id="tvUl"></ul>
+    </div>
+    <div class="ch-scroll" id="rdPane" style="display:none">
+        <div class="list-lbl">Stations</div>
+        <ul class="ch-ul" id="rdUl"></ul>
+    </div>
+</aside>
 
-        const channelListEl = document.getElementById('channelList');
-        const playerContainer = document.getElementById('playerContainer');
+<main class="main" id="M">
+    <div class="glow g1"></div>
+    <div class="glow g2"></div>
 
-        // --- Render Sidebar ---
-        function renderSidebar() {
-            channelListEl.innerHTML = '';
-            channels.forEach((channel, index) => {
-                const li = document.createElement('li');
-                li.className = 'channel-item';
-                li.onclick = () => playChannel(index);
-                li.id = `ch-btn-${index}`;
+    <div class="topbar">
+        <div class="tb-logo" id="tbLogo"></div>
+        <span class="tb-name" id="tbName">—</span>
+        <div class="tb-badge b-live" id="bLive"><span class="dot"></span>Live</div>
+        <div class="tb-badge b-onair" id="bAir"><span class="dot dot-r"></span>On Air</div>
+        <div class="tb-sp"></div>
+    </div>
 
-                li.innerHTML = `
-                    <div class="channel-logo">
-                        <img src="${channel.logoImage}" alt="${channel.name} Logo">
-                    </div>
-                    <div class="channel-info">
-                        <span class="channel-name">${channel.name}</span>
-                        <span class="live-status"><span class="live-dot"></span> Live</span>
-                    </div>
-                `;
-                channelListEl.appendChild(li);
-            });
-        }
+    <div class="stage">
+        <div class="tv-wrap" id="tvWrap"></div>
 
-        // --- Play Channel Logic ---
-        function playChannel(index) {
-            const channel = channels[index];
+        <div class="radio-wrap" id="rdWrap">
+            <div class="orb-scene">
+                <div class="wave w1 stop" id="w1"></div>
+                <div class="wave w2 stop" id="w2"></div>
+                <div class="wave w3 stop" id="w3"></div>
+                <div class="orb" id="orb"><div class="orb-inner" id="orbIn"></div></div>
+            </div>
+            <div><div class="st-name" id="stName">Select a Station</div><div class="st-genre" id="stGenre">Kurdish Radio</div></div>
+            <div class="r-ctrls">
+                <div class="vol-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    <input type="range" class="vol-range" id="vol" min="0" max="1" step="0.02" value="0.85" oninput="setVol(this.value)">
+                </div>
+                <button class="play-btn" id="playBtn" onclick="togglePlay()">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </button>
+            </div>
+        </div>
 
-            // Update UI
-            document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
-            const activeBtn = document.getElementById(`ch-btn-${index}`);
-            if (activeBtn) activeBtn.classList.add('active');
+        <div class="radio-iframe" id="rdIframe"></div>
+    </div>
+</main>
 
-            // Cleanup previous player
-            if (hlsInstance) {
-                hlsInstance.destroy();
-                hlsInstance = null;
-            }
-            playerContainer.innerHTML = '';
+<audio id="aud" preload="none"></audio>
 
-            // Load New Player
-            if (channel.type === 'iframe') {
-                playerContainer.innerHTML = channel.htmlContent;
-            } 
-            else if (channel.type === 'hls') {
-                const video = document.createElement('video');
-                video.controls = true;
-                video.autoplay = true;
-                video.playsInline = true;
-                
-                playerContainer.appendChild(video);
+<script>
+const TV=[
+    {name:'Rudaw',    logo:'image_0.png',type:'hls',   url:'https://svs.itworkscdn.net/rudawlive/rudawlive.smil/playlist.m3u8'},
+    {name:'Ronahi TV',logo:'image_3.png',type:'hls',   url:'https://hlspackager.akamaized.net/live/DB/RONAHI_TV/HLS/RONAHI_TV.m3u8'},
+    {name:'Channel 8',logo:'image_4.png',type:'hls',   url:'https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8'},
+    {name:'Ava Media',logo:'image_1.png',type:'iframe',html:'<iframe allow="fullscreen" src="https://avamedia.live" frameborder="0" scrolling="no" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" style="width:100%;height:100%;border:none;display:block;"></iframe>'},
+    {name:'Shams TV', logo:'image_2.png',type:'hls',   url:'https://stream.shams.tv/hls/0/stream.m3u8'},
+    {name:'Welat TV', logo:'image_5.png', type:'iframe', html:'<iframe src="https://hlsplayer.net/embed?type=m3u8&src=https://stream.badinan.xyz/welat/tv/playlist.m3u8" allowfullscreen style="width:100%;height:100%;border:none;display:block;"></iframe>'}
+];
+const RD=[
+    {name:'Kurd1 Radyo', genre:'Kurdish Hits',          abbr:'K1', logo:'Kurd1rayo_6.png', type:'iframe', src:'https://www.radioking.com/widgets/player/player.php?id=119251&c=%23FFFFFF&c2=%23000000&ii=&p=1&pp=1&i=1&eq=1&po=1&t=1&f=v&v=2&s=1&li=1&h=365&l=500&a=0&plc=0',h:365},
+    {name:'Arta FM',     genre:'Music & Entertainment', abbr:'AF', logo:'Artafm_7.png', type:'stream', url:'https://edge.mixlr.com/channel/qtgru'}
+];
 
-                if (Hls.isSupported()) {
-                    hlsInstance = new Hls();
-                    hlsInstance.loadSource(channel.url);
-                    hlsInstance.attachMedia(video);
-                    hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                        video.play().catch(() => console.log("Autoplay blocked"));
-                    });
-                }
-                else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = channel.url;
-                    video.addEventListener('loadedmetadata', function() {
-                        video.play();
-                    });
-                }
-            }
-        }
+let hls=null,sec='tv',selTV=-1,selRD=-1,rPlaying=false;
+const aud=document.getElementById('aud');
 
-        // --- Init ---
-        renderSidebar();
-        playChannel(0);
+function init(){
+    TV.forEach((c,i)=>{
+        const li=document.createElement('li');li.className='chi';li.id='tv'+i;li.onclick=()=>playTV(i);
+        const tvLogoHtml=c.logo
+            ?`<img src="${c.logo}" alt="${c.name}" onerror="this.style.display='none'">`
+            :`<div class="ch-abbr" style="color:var(--tv);font-size:.62rem">${c.name.split(' ').map(w=>w[0]).join('')}</div>`;
+        li.innerHTML=`<div class="ch-logo">${tvLogoHtml}</div><div class="ch-meta"><div class="ch-name">${c.name}</div><div class="ch-sub"><span class="dot"></span><span class="lbl-live">LIVE</span></div></div>`;
+        document.getElementById('tvUl').appendChild(li);
+    });
+    RD.forEach((c,i)=>{
+        const li=document.createElement('li');li.className='chi';li.id='rd'+i;li.onclick=()=>pickRD(i);
+        const logoHtml=c.logo
+            ?`<img src="${c.logo}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;border-radius:7px" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ch-abbr',textContent:'${c.abbr}'}))">`
+            :`<div class="ch-abbr">${c.abbr}</div>`;
+        li.innerHTML=`<div class="ch-logo">${logoHtml}</div><div class="ch-meta"><div class="ch-name">${c.name}</div><div class="ch-sub">${c.genre}</div></div>`;
+        document.getElementById('rdUl').appendChild(li);
+    });
+    playTV(0);
+}
 
-    </script>
+function switchTo(s){
+    sec=s;const r=s==='radio';
+    document.getElementById('pill').classList.toggle('s',r);
+    document.getElementById('tvBtn').className='tab-btn'+(r?'':' on-tv');
+    document.getElementById('rdBtn').className='tab-btn'+(r?' on-radio':'');
+    document.getElementById('tvPane').style.display=r?'none':'';
+    document.getElementById('rdPane').style.display=r?'':'none';
+    const m=document.getElementById('M');m.classList.toggle('radio',r);
+    document.getElementById('bLive').style.display=r?'none':'';
+    document.getElementById('bAir').style.display=r?'':'none';
+    if(r){if(hls){hls.destroy();hls=null;}document.getElementById('tvWrap').innerHTML='';selTV=-1;if(selRD>=0)refreshRD(selRD);else setTB('','','txt');}
+    else{aud.pause();rPlaying=false;m.classList.remove('iframed');if(selTV===-1)playTV(0);else playTV(selTV);}
+}
+
+function playTV(i){
+    const c=TV[i];selTV=i;
+    document.querySelectorAll('#tvUl .chi').forEach(e=>e.classList.remove('stv'));
+    document.getElementById('tv'+i).classList.add('stv');
+    setTB(c.logo,c.name,'img',c.name.split(' ').map(w=>w[0]).join(''));
+    if(hls){hls.destroy();hls=null;}
+    const w=document.getElementById('tvWrap');w.innerHTML='';
+    if(c.type==='iframe'){w.innerHTML=c.html;return;}
+    const v=document.createElement('video');v.controls=true;v.autoplay=true;v.playsInline=true;w.appendChild(v);
+    if(Hls.isSupported()){
+        hls=new Hls({
+            enableWorker:true,
+            lowLatencyMode:true,
+            liveSyncDurationCount:1,
+            liveMaxLatencyDurationCount:3,
+            maxBufferLength:8,
+            maxMaxBufferLength:15,
+            maxBufferSize:20*1000*1000,
+            maxBufferHole:0.3,
+            startFragPrefetch:true,
+            startLevel:-1,
+            abrEwmaDefaultEstimate:1500000
+        });
+        hls.loadSource(c.url);
+        hls.attachMedia(v);
+        hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play().catch(()=>{}));
+    }
+    else if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=c.url;v.addEventListener('loadedmetadata',()=>v.play());}
+}
+
+function pickRD(i){
+    const c=RD[i];
+    // Always pause previous audio when switching channels
+    aud.pause();rPlaying=false;setBtnState(false);setWaves(false);
+    selRD=i;
+    document.querySelectorAll('#rdUl .chi').forEach(e=>e.classList.remove('srd'));
+    document.getElementById('rd'+i).classList.add('srd');
+    refreshRD(i);
+    const m=document.getElementById('M');
+    if(c.type==='iframe'){
+        m.classList.add('iframed');
+        document.getElementById('rdIframe').innerHTML=`<iframe src="${c.src}" style="width:100%;height:${c.h}px;border:none;display:block;" scrolling="no" allowtransparency="true" allow="autoplay"></iframe>`;
+    }else{
+        m.classList.remove('iframed');
+        aud.src=c.url;aud.volume=parseFloat(document.getElementById('vol').value);
+        aud.play().then(()=>{rPlaying=true;setBtnState(true);setWaves(true);}).catch(()=>{rPlaying=false;setBtnState(false);setWaves(false);});
+    }
+}
+
+function refreshRD(i){
+    const c=RD[i];
+    document.getElementById('stName').textContent=c.name;
+    document.getElementById('stGenre').textContent=c.genre;
+    const orbIn=document.getElementById('orbIn');
+    if(c.logo){
+        orbIn.innerHTML=`<img src="${c.logo}" alt="${c.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'orb-txt',textContent:'${c.abbr}'}))">`;
+    } else {
+        orbIn.innerHTML=`<div class="orb-txt">${c.abbr}</div>`;
+    }
+    setTB(c.logo||'',c.name,c.logo?'img':'txt',c.abbr);
+}
+
+function togglePlay(){
+    if(selRD<0||RD[selRD].type==='iframe')return;
+    if(rPlaying){aud.pause();rPlaying=false;setWaves(false);}
+    else{aud.play().then(()=>{rPlaying=true;setWaves(true);});}
+    setBtnState(rPlaying);
+}
+
+function setBtnState(on){
+    document.getElementById('playBtn').innerHTML=on
+        ?'<svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+        :'<svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+}
+
+function setWaves(on){
+    ['w1','w2','w3'].forEach(id=>document.getElementById(id).classList.toggle('stop',!on));
+    document.getElementById('orb').classList.toggle('on',on);
+}
+
+function setVol(v){aud.volume=parseFloat(v);}
+
+function setTB(logo,name,kind,abbr){
+    document.getElementById('tbName').textContent=name||'—';
+    const t=document.getElementById('tbLogo');
+    if(logo){
+        t.innerHTML=`<img src="${logo}" alt="${name}" style="width:100%;height:100%;object-fit:cover;border-radius:5px" onerror="this.style.display='none'">`;
+    } else if(kind==='txt'&&abbr){
+        t.innerHTML=`<div class="tb-logo-txt">${abbr}</div>`;
+    } else {
+        t.innerHTML='';
+    }
+}
+
+init();
+</script>
 </body>
 </html>
