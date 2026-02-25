@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Kurdistan Live Hub</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
-        :root {
+        :root{
             --bg:#070810;--bg2:#0c0e1a;--bg3:#111422;--bg4:#181c2e;--surface:#1d2138;
             --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
             --tv:#60a5fa;--tv-glow:rgba(96,165,250,0.14);--tv-dim:rgba(96,165,250,0.07);
@@ -17,18 +17,18 @@
         }
         *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
         html,body{height:100%;overflow:hidden}
-        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);display:flex}
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:row}
         body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
 
         /* SIDEBAR */
         .sidebar{width:272px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-        .sb-top{padding:1.35rem 1.35rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem}
+        .sb-top{padding:1.35rem 1.35rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;flex-shrink:0}
         .brand-gem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#60a5fa 0%,#818cf8 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0}
         .brand-gem svg{width:16px;height:16px;color:#fff}
         .brand-name{font-weight:800;font-size:.92rem;letter-spacing:-.01em;line-height:1;color:var(--text)}
         .brand-tag{font-size:.62rem;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
 
-        .tabs{display:flex;margin:.9rem;background:var(--bg3);border-radius:10px;padding:3px;border:1px solid var(--border);position:relative}
+        .tabs{display:flex;margin:.9rem;background:var(--bg3);border-radius:10px;padding:3px;border:1px solid var(--border);position:relative;flex-shrink:0}
         .tab-pill{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:8px;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.3);transition:transform .28s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:0}
         .tab-pill.s{transform:translateX(100%)}
         .tab-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.52rem .5rem;border:none;background:transparent;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.76rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);transition:color .2s;position:relative;z-index:1}
@@ -36,18 +36,19 @@
         .tab-btn.on-tv{color:var(--tv)}
         .tab-btn.on-radio{color:var(--radio)}
 
-        .ch-scroll{flex:1;overflow-y:auto;padding:.4rem .65rem 1rem}
+        .ch-scroll{flex:1;overflow-y:auto;padding:.4rem .65rem 1rem;min-height:0}
         .ch-scroll::-webkit-scrollbar{width:2px}
         .ch-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
         .list-lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:.7rem .5rem .3rem}
         .ch-ul{list-style:none;display:flex;flex-direction:column;gap:1px}
-        .chi{display:flex;align-items:center;gap:.75rem;padding:.6rem .7rem;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:background .14s,border-color .14s,transform .1s}
+        .chi{display:flex;align-items:center;gap:.75rem;padding:.6rem .7rem;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:background .14s,border-color .14s,transform .1s;user-select:none}
         .chi:hover{background:var(--bg3);transform:translateX(3px)}
         .chi.stv{background:var(--tv-dim);border-color:rgba(96,165,250,.22)}
         .chi.srd{background:var(--radio-dim);border-color:rgba(251,146,60,.22)}
         .ch-logo{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center}
-        .ch-logo img{width:100%;height:100%;object-fit:cover}
-        .ch-abbr{font-family:'Outfit',sans-serif;font-size:.68rem;font-weight:800;color:var(--radio);text-align:center;line-height:1.15;padding:2px}
+        .ch-logo img{width:100%;height:100%;object-fit:cover;display:block}
+        .ch-abbr{font-size:.68rem;font-weight:800;color:var(--radio);text-align:center;line-height:1.15;padding:2px}
+        .ch-abbr-tv{font-size:.62rem;font-weight:800;color:var(--tv);text-align:center;line-height:1.15;padding:2px}
         .ch-meta{flex:1;overflow:hidden}
         .ch-name{font-weight:600;font-size:.845rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
         .ch-sub{font-size:.65rem;color:var(--text3);margin-top:1px;display:flex;align-items:center;gap:4px}
@@ -57,7 +58,7 @@
         @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
         /* MAIN */
-        .main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+        .main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;min-width:0}
         .glow{position:absolute;border-radius:50%;pointer-events:none;filter:blur(90px);transition:all .5s}
         .g1{width:500px;height:350px;top:-100px;right:50px;background:radial-gradient(circle,rgba(96,165,250,.055) 0%,transparent 70%)}
         .g2{width:350px;height:350px;bottom:-60px;left:20px;background:radial-gradient(circle,rgba(129,140,248,.04) 0%,transparent 70%)}
@@ -76,11 +77,19 @@
         .tb-sp{flex:1}
 
         /* STAGE */
-        .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem 2rem;overflow:hidden;position:relative}
+        .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem 2rem;overflow:hidden;position:relative;min-height:0}
 
-        /* TV */
-        .tv-wrap{width:100%;max-width:1100px;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--border2),0 32px 72px rgba(0,0,0,.65),0 0 100px var(--tv-glow)}
-        .tv-wrap video,.tv-wrap iframe{width:100%;height:100%;border:none;display:block}
+        /* TV PLAYER */
+        .tv-wrap{width:100%;max-width:1100px;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--border2),0 32px 72px rgba(0,0,0,.65),0 0 100px var(--tv-glow);position:relative}
+        .tv-wrap video{width:100%;height:100%;border:none;display:block;object-fit:contain}
+        .tv-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block}
+
+        /* loading spinner */
+        .tv-loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;background:rgba(7,8,16,.75);z-index:3;transition:opacity .4s}
+        .tv-loader.hidden{opacity:0;pointer-events:none}
+        .spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--tv);border-radius:50%;animation:spin .7s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .loader-txt{font-size:.72rem;color:var(--text3);letter-spacing:.06em}
 
         /* RADIO orb */
         .radio-wrap{display:none;flex-direction:column;align-items:center;gap:2.2rem;width:100%;max-width:420px}
@@ -93,9 +102,9 @@
         @keyframes wave{0%{transform:scale(.88);opacity:.55}100%{transform:scale(1.04);opacity:0}}
         .orb{width:155px;height:155px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(251,146,60,.05);transition:box-shadow .35s}
         .orb.on{box-shadow:0 0 70px rgba(251,146,60,.22),0 0 0 1px rgba(251,146,60,.28)}
-        .orb-inner{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+        .orb-inner{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden}
         .orb-inner img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-        .orb-txt{font-family:'Outfit',sans-serif;font-size:1.35rem;font-weight:900;color:var(--radio)}
+        .orb-txt{font-size:1.35rem;font-weight:900;color:var(--radio)}
         .st-name{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1;text-align:center}
         .st-genre{font-size:.78rem;color:var(--text3);margin-top:.35rem;letter-spacing:.06em;text-transform:uppercase;text-align:center}
         .r-ctrls{display:flex;align-items:center;gap:1.1rem}
@@ -112,23 +121,100 @@
         .radio-iframe{display:none;width:100%;max-width:500px;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--border2),0 24px 56px rgba(0,0,0,.55),0 0 80px var(--radio-glow)}
         .radio-iframe iframe{display:block;width:100%;border:none}
 
-        /* Visibility */
+        /* Visibility toggles */
         .main.radio .tv-wrap{display:none}
         .main.radio .radio-wrap{display:flex}
         .main.radio.iframed .radio-wrap{display:none}
         .main.radio.iframed .radio-iframe{display:block}
 
-        /* MOBILE */
-        @media(max-width:840px){
+        /* ═══════════════════════
+           MOBILE ≤ 768px
+        ═══════════════════════ */
+        @media(max-width:768px){
             body{flex-direction:column}
-            .sidebar{width:100%;height:auto;flex-direction:row;border-right:none;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+
+            .sidebar{
+                width:100%;height:auto;
+                flex-direction:column;
+                border-right:none;
+                border-bottom:1px solid var(--border);
+                flex-shrink:0;
+            }
             .sb-top{display:none}
-            .tabs{margin:.6rem;flex-shrink:0}
-            .ch-scroll{display:flex;flex-direction:row;padding:.5rem .5rem .5rem 0;overflow-y:hidden}
+            .tabs{margin:.6rem .6rem .4rem;flex-shrink:0}
+
+            /* horizontal scrollable channel strip */
+            .ch-scroll{
+                flex:none;
+                overflow-y:hidden;
+                overflow-x:auto;
+                padding:.3rem .6rem .6rem;
+                scroll-snap-type:x mandatory;
+                -webkit-overflow-scrolling:touch;
+            }
+            .ch-scroll::-webkit-scrollbar{height:2px}
+            .ch-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
             .list-lbl{display:none}
-            .ch-ul{flex-direction:row;gap:3px}
-            .chi{min-width:148px}
-            .stage{padding:1rem}
+
+            /* channel cards stacked vertically inside horizontal scroll */
+            .ch-ul{flex-direction:row;gap:6px;align-items:stretch}
+            .chi{
+                flex-direction:column;
+                align-items:center;
+                text-align:center;
+                min-width:68px;
+                max-width:68px;
+                padding:.5rem .3rem .45rem;
+                border-radius:12px;
+                gap:.3rem;
+                scroll-snap-align:start;
+                transform:none !important;
+            }
+            .chi:hover{background:var(--bg3);transform:none !important}
+            .ch-logo{width:34px;height:34px;border-radius:8px}
+            .ch-meta{overflow:visible;width:100%}
+            .ch-name{
+                font-size:.58rem;font-weight:700;
+                white-space:normal;line-height:1.2;
+                overflow:visible;text-overflow:unset;
+                text-align:center;
+            }
+            .ch-sub{display:none}
+
+            /* main area */
+            .main{flex:1;min-height:0}
+            .glow{display:none}
+            .topbar{height:42px;padding:0 .9rem;gap:.6rem}
+            .tb-name{font-size:.78rem}
+            .tb-badge{padding:2px 7px;font-size:.58rem}
+
+            /* stage fills remaining space */
+            .stage{
+                padding:.7rem;
+                align-items:center;
+                justify-content:center;
+            }
+
+            /* video player: 16:9, fills width */
+            .tv-wrap{
+                width:100%;
+                max-width:100%;
+                aspect-ratio:16/9;
+                border-radius:10px;
+                align-self:center;
+            }
+
+            /* radio */
+            .radio-iframe{max-width:100%}
+            .radio-wrap{max-width:100%;padding:0 .5rem;gap:1.4rem}
+            .orb{width:120px;height:120px}
+            .orb-inner{width:68px;height:68px}
+            .wave.w1{width:148px;height:148px}
+            .wave.w2{width:198px;height:198px}
+            .wave.w3{width:248px;height:248px}
+            .st-name{font-size:1.45rem}
+            .vol-range{width:70px}
+            .play-btn{width:50px;height:50px}
         }
     </style>
 </head>
@@ -184,7 +270,12 @@
     </div>
 
     <div class="stage">
-        <div class="tv-wrap" id="tvWrap"></div>
+        <div class="tv-wrap" id="tvWrap">
+            <div class="tv-loader" id="tvLoader">
+                <div class="spinner"></div>
+                <div class="loader-txt">Loading stream…</div>
+            </div>
+        </div>
 
         <div class="radio-wrap" id="rdWrap">
             <div class="orb-scene">
@@ -193,7 +284,10 @@
                 <div class="wave w3 stop" id="w3"></div>
                 <div class="orb" id="orb"><div class="orb-inner" id="orbIn"></div></div>
             </div>
-            <div><div class="st-name" id="stName">Select a Station</div><div class="st-genre" id="stGenre">Kurdish Radio</div></div>
+            <div>
+                <div class="st-name" id="stName">Select a Station</div>
+                <div class="st-genre" id="stGenre">Kurdish Radio</div>
+            </div>
             <div class="r-ctrls">
                 <div class="vol-row">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -212,35 +306,67 @@
 <audio id="aud" preload="none"></audio>
 
 <script>
+// ── CHANNEL DATA ──────────────────────────────────────────
 const TV=[
-    {name:'Rudaw',    logo:'image_0.png',type:'hls',   url:'https://svs.itworkscdn.net/rudawlive/rudawlive.smil/playlist.m3u8'},
-    {name:'Ronahi TV',logo:'image_3.png',type:'hls',   url:'https://hlspackager.akamaized.net/live/DB/RONAHI_TV/HLS/RONAHI_TV.m3u8'},
-    {name:'Channel 8',logo:'image_4.png',type:'hls',   url:'https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8'},
-    {name:'Ava Media',logo:'image_1.png',type:'iframe',html:'<iframe allow="fullscreen" src="https://avamedia.live" frameborder="0" scrolling="no" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" style="width:100%;height:100%;border:none;display:block;"></iframe>'},
-    {name:'Shams TV', logo:'image_2.png',type:'hls',   url:'https://stream.shams.tv/hls/0/stream.m3u8'},
-    {name:'Welat TV', logo:'image_5.png', type:'iframe', html:'<iframe src="https://hlsplayer.net/embed?type=m3u8&src=https://stream.badinan.xyz/welat/tv/playlist.m3u8" allowfullscreen style="width:100%;height:100%;border:none;display:block;"></iframe>'}
-];
-const RD=[
-    {name:'Kurd1 Radyo', genre:'Kurdish Hits',          abbr:'K1', logo:'Kurd1rayo_6.png', type:'iframe', src:'https://www.radioking.com/widgets/player/player.php?id=119251&c=%23FFFFFF&c2=%23000000&ii=&p=1&pp=1&i=1&eq=1&po=1&t=1&f=v&v=2&s=1&li=1&h=365&l=500&a=0&plc=0',h:365},
-    {name:'Arta FM',     genre:'Music & Entertainment', abbr:'AF', logo:'Artafm_7.png', type:'stream', url:'https://edge.mixlr.com/channel/qtgru'}
+    // Rudaw: direct HLS — their CDN stream
+    {name:'Rudaw',    logo:'image_0.png', type:'hls', url:'https://svs.itworkscdn.net/rudawlive/rudawlive.smil/playlist.m3u8',
+     // fallback embed if HLS fails
+     fallbackHtml:'<iframe src="https://www.rudaw.net/en/livetv" allowfullscreen allow="autoplay" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"></iframe>'},
+    {name:'Ronahi TV',logo:'image_3.png', type:'hls', url:'https://hlspackager.akamaized.net/live/DB/RONAHI_TV/HLS/RONAHI_TV.m3u8'},
+    {name:'Channel 8',logo:'image_4.png', type:'hls', url:'https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8'},
+    {name:'Ava Media',logo:'image_1.png', type:'iframe', html:'<iframe allow="fullscreen;autoplay" src="https://avamedia.live" frameborder="0" scrolling="no" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;"></iframe>'},
+    {name:'Shams TV', logo:'image_2.png', type:'hls', url:'https://stream.shams.tv/hls/0/stream.m3u8'},
+    {name:'Welat TV', logo:'image_5.png',
+     type:'hls', url:'https://stream.badinan.xyz/welat/tv/playlist.m3u8'}
 ];
 
-let hls=null,sec='tv',selTV=-1,selRD=-1,rPlaying=false;
+const RD=[
+    {name:'Kurd1 Radyo', genre:'Kurdish Hits',          abbr:'K1', logo:'Kurd1rayo_6.png',
+     type:'iframe', src:'https://www.radioking.com/widgets/player/player.php?id=119251&c=%23FFFFFF&c2=%23000000&ii=&p=1&pp=1&i=1&eq=1&po=1&t=1&f=v&v=2&s=1&li=1&h=365&l=500&a=0&plc=0', h:365},
+    {name:'Arta FM',     genre:'Music & Entertainment', abbr:'AF', logo:'Artafm_7.png',
+     type:'stream', url:'https://edge.mixlr.com/channel/qtgru'}
+];
+
+// ── HLS CONFIG — optimised for fast live startup ──────────
+const HLS_CFG={
+    enableWorker:true,
+    lowLatencyMode:true,
+    liveSyncDurationCount:1,
+    liveMaxLatencyDurationCount:4,
+    maxBufferLength:10,
+    maxMaxBufferLength:20,
+    maxBufferSize:15*1000*1000,
+    maxBufferHole:0.5,
+    startFragPrefetch:true,
+    startLevel:-1,
+    abrEwmaDefaultEstimate:2000000,
+    fragLoadingMaxRetry:5,
+    manifestLoadingMaxRetry:4,
+    levelLoadingMaxRetry:4,
+    fragLoadingRetryDelay:800,
+    manifestLoadingRetryDelay:500,
+};
+
+// ── STATE ─────────────────────────────────────────────────
+let hls=null, sec='tv', selTV=-1, selRD=-1, rPlaying=false;
 const aud=document.getElementById('aud');
 
+// ── INIT ─────────────────────────────────────────────────
 function init(){
     TV.forEach((c,i)=>{
-        const li=document.createElement('li');li.className='chi';li.id='tv'+i;li.onclick=()=>playTV(i);
-        const tvLogoHtml=c.logo
+        const li=document.createElement('li');
+        li.className='chi'; li.id='tv'+i; li.onclick=()=>playTV(i);
+        const logoHtml=c.logo
             ?`<img src="${c.logo}" alt="${c.name}" onerror="this.style.display='none'">`
-            :`<div class="ch-abbr" style="color:var(--tv);font-size:.62rem">${c.name.split(' ').map(w=>w[0]).join('')}</div>`;
-        li.innerHTML=`<div class="ch-logo">${tvLogoHtml}</div><div class="ch-meta"><div class="ch-name">${c.name}</div><div class="ch-sub"><span class="dot"></span><span class="lbl-live">LIVE</span></div></div>`;
+            :`<div class="ch-abbr-tv">${c.name.split(' ').map(w=>w[0]).join('')}</div>`;
+        li.innerHTML=`<div class="ch-logo">${logoHtml}</div><div class="ch-meta"><div class="ch-name">${c.name}</div><div class="ch-sub"><span class="dot"></span><span class="lbl-live">LIVE</span></div></div>`;
         document.getElementById('tvUl').appendChild(li);
     });
     RD.forEach((c,i)=>{
-        const li=document.createElement('li');li.className='chi';li.id='rd'+i;li.onclick=()=>pickRD(i);
+        const li=document.createElement('li');
+        li.className='chi'; li.id='rd'+i; li.onclick=()=>pickRD(i);
         const logoHtml=c.logo
-            ?`<img src="${c.logo}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;border-radius:7px" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ch-abbr',textContent:'${c.abbr}'}))">`
+            ?`<img src="${c.logo}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.replaceWith(mkAbbr('${c.abbr}'))">`
             :`<div class="ch-abbr">${c.abbr}</div>`;
         li.innerHTML=`<div class="ch-logo">${logoHtml}</div><div class="ch-meta"><div class="ch-name">${c.name}</div><div class="ch-sub">${c.genre}</div></div>`;
         document.getElementById('rdUl').appendChild(li);
@@ -248,54 +374,122 @@ function init(){
     playTV(0);
 }
 
+function mkAbbr(txt){
+    const d=document.createElement('div');
+    d.className='ch-abbr'; d.textContent=txt; return d;
+}
+
+// ── SECTION SWITCH ────────────────────────────────────────
 function switchTo(s){
-    sec=s;const r=s==='radio';
+    sec=s; const r=s==='radio';
     document.getElementById('pill').classList.toggle('s',r);
     document.getElementById('tvBtn').className='tab-btn'+(r?'':' on-tv');
     document.getElementById('rdBtn').className='tab-btn'+(r?' on-radio':'');
     document.getElementById('tvPane').style.display=r?'none':'';
     document.getElementById('rdPane').style.display=r?'':'none';
-    const m=document.getElementById('M');m.classList.toggle('radio',r);
+    const m=document.getElementById('M');
+    m.classList.toggle('radio',r);
     document.getElementById('bLive').style.display=r?'none':'';
     document.getElementById('bAir').style.display=r?'':'none';
-    if(r){if(hls){hls.destroy();hls=null;}document.getElementById('tvWrap').innerHTML='';selTV=-1;if(selRD>=0)refreshRD(selRD);else setTB('','','txt');}
-    else{aud.pause();rPlaying=false;m.classList.remove('iframed');if(selTV===-1)playTV(0);else playTV(selTV);}
+    if(r){
+        stopHLS();
+        clearTVWrap();
+        selTV=-1;
+        if(selRD>=0) refreshRD(selRD); else setTB('','','txt');
+    } else {
+        aud.pause(); rPlaying=false;
+        m.classList.remove('iframed');
+        if(selTV===-1) playTV(0); else playTV(selTV);
+    }
+}
+
+// ── TV ────────────────────────────────────────────────────
+function stopHLS(){
+    if(hls){hls.destroy();hls=null;}
+}
+
+function clearTVWrap(){
+    const w=document.getElementById('tvWrap');
+    Array.from(w.children).forEach(el=>{
+        if(!el.classList.contains('tv-loader')) el.remove();
+    });
+    showLoader(true);
+}
+
+function showLoader(show){
+    const l=document.getElementById('tvLoader');
+    if(l) l.classList.toggle('hidden',!show);
 }
 
 function playTV(i){
-    const c=TV[i];selTV=i;
+    const c=TV[i]; selTV=i;
     document.querySelectorAll('#tvUl .chi').forEach(e=>e.classList.remove('stv'));
     document.getElementById('tv'+i).classList.add('stv');
     setTB(c.logo,c.name,'img',c.name.split(' ').map(w=>w[0]).join(''));
-    if(hls){hls.destroy();hls=null;}
-    const w=document.getElementById('tvWrap');w.innerHTML='';
-    if(c.type==='iframe'){w.innerHTML=c.html;return;}
-    const v=document.createElement('video');v.controls=true;v.autoplay=true;v.playsInline=true;w.appendChild(v);
+    stopHLS();
+    clearTVWrap();
+
+    const w=document.getElementById('tvWrap');
+
+    if(c.type==='iframe'){
+        w.insertAdjacentHTML('beforeend',c.html);
+        setTimeout(()=>showLoader(false),1800);
+        return;
+    }
+
+    // HLS path
+    const v=document.createElement('video');
+    v.controls=true; v.autoplay=true; v.playsInline=true;
+    v.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain';
+    w.appendChild(v);
+
     if(Hls.isSupported()){
-        hls=new Hls({
-            enableWorker:true,
-            lowLatencyMode:true,
-            liveSyncDurationCount:1,
-            liveMaxLatencyDurationCount:3,
-            maxBufferLength:8,
-            maxMaxBufferLength:15,
-            maxBufferSize:20*1000*1000,
-            maxBufferHole:0.3,
-            startFragPrefetch:true,
-            startLevel:-1,
-            abrEwmaDefaultEstimate:1500000
-        });
+        hls=new Hls(HLS_CFG);
         hls.loadSource(c.url);
         hls.attachMedia(v);
-        hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play().catch(()=>{}));
+        hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+            showLoader(false);
+            v.play().catch(()=>{});
+        });
+        hls.on(Hls.Events.ERROR,(evt,d)=>{
+            if(!d.fatal) return;
+            if(d.type===Hls.ErrorTypes.NETWORK_ERROR){
+                // try to recover; if channel has a fallback, use it
+                console.warn('HLS network error — attempting recovery');
+                hls.startLoad();
+                // after 5s with no MANIFEST_PARSED, fall back to iframe if available
+                if(c.fallbackHtml){
+                    setTimeout(()=>{
+                        const l=document.getElementById('tvLoader');
+                        if(l&&!l.classList.contains('hidden')) return; // already loaded
+                        stopHLS();
+                        clearTVWrap();
+                        w.insertAdjacentHTML('beforeend',c.fallbackHtml);
+                        setTimeout(()=>showLoader(false),1800);
+                    },5000);
+                }
+            } else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){
+                hls.recoverMediaError();
+            } else {
+                // hard fatal — retry once after 3s
+                stopHLS();
+                setTimeout(()=>{ if(selTV===i) playTV(i); },3000);
+            }
+        });
+    } else if(v.canPlayType('application/vnd.apple.mpegurl')){
+        // Safari native HLS
+        v.src=c.url;
+        v.addEventListener('loadedmetadata',()=>{ showLoader(false); v.play(); });
+        v.addEventListener('error',()=>{
+            if(c.fallbackHtml){ stopHLS(); clearTVWrap(); w.insertAdjacentHTML('beforeend',c.fallbackHtml); setTimeout(()=>showLoader(false),1800); }
+        });
     }
-    else if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=c.url;v.addEventListener('loadedmetadata',()=>v.play());}
 }
 
+// ── RADIO ─────────────────────────────────────────────────
 function pickRD(i){
     const c=RD[i];
-    // Always pause previous audio when switching channels
-    aud.pause();rPlaying=false;setBtnState(false);setWaves(false);
+    aud.pause(); rPlaying=false; setBtnState(false); setWaves(false);
     selRD=i;
     document.querySelectorAll('#rdUl .chi').forEach(e=>e.classList.remove('srd'));
     document.getElementById('rd'+i).classList.add('srd');
@@ -304,10 +498,13 @@ function pickRD(i){
     if(c.type==='iframe'){
         m.classList.add('iframed');
         document.getElementById('rdIframe').innerHTML=`<iframe src="${c.src}" style="width:100%;height:${c.h}px;border:none;display:block;" scrolling="no" allowtransparency="true" allow="autoplay"></iframe>`;
-    }else{
+    } else {
         m.classList.remove('iframed');
-        aud.src=c.url;aud.volume=parseFloat(document.getElementById('vol').value);
-        aud.play().then(()=>{rPlaying=true;setBtnState(true);setWaves(true);}).catch(()=>{rPlaying=false;setBtnState(false);setWaves(false);});
+        aud.src=c.url;
+        aud.volume=parseFloat(document.getElementById('vol').value);
+        aud.play()
+            .then(()=>{ rPlaying=true; setBtnState(true); setWaves(true); })
+            .catch(()=>{ rPlaying=false; setBtnState(false); setWaves(false); });
     }
 }
 
@@ -316,18 +513,16 @@ function refreshRD(i){
     document.getElementById('stName').textContent=c.name;
     document.getElementById('stGenre').textContent=c.genre;
     const orbIn=document.getElementById('orbIn');
-    if(c.logo){
-        orbIn.innerHTML=`<img src="${c.logo}" alt="${c.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'orb-txt',textContent:'${c.abbr}'}))">`;
-    } else {
-        orbIn.innerHTML=`<div class="orb-txt">${c.abbr}</div>`;
-    }
+    orbIn.innerHTML=c.logo
+        ?`<img src="${c.logo}" alt="${c.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'orb-txt',textContent:'${c.abbr}'}))">` 
+        :`<div class="orb-txt">${c.abbr}</div>`;
     setTB(c.logo||'',c.name,c.logo?'img':'txt',c.abbr);
 }
 
 function togglePlay(){
-    if(selRD<0||RD[selRD].type==='iframe')return;
-    if(rPlaying){aud.pause();rPlaying=false;setWaves(false);}
-    else{aud.play().then(()=>{rPlaying=true;setWaves(true);});}
+    if(selRD<0||RD[selRD].type==='iframe') return;
+    if(rPlaying){ aud.pause(); rPlaying=false; setWaves(false); }
+    else { aud.play().then(()=>{ rPlaying=true; setWaves(true); }); }
     setBtnState(rPlaying);
 }
 
@@ -342,7 +537,7 @@ function setWaves(on){
     document.getElementById('orb').classList.toggle('on',on);
 }
 
-function setVol(v){aud.volume=parseFloat(v);}
+function setVol(v){ aud.volume=parseFloat(v); }
 
 function setTB(logo,name,kind,abbr){
     document.getElementById('tbName').textContent=name||'—';
