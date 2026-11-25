@@ -4,225 +4,435 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Kurdistan Live Hub</title>
+
+    <!-- hls.js plays .m3u8 live streams in browsers that can't do it natively (Chrome, Firefox, Edge) -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+
+    <!-- Fonts: Outfit for the interface, Fraunces for the radio station title -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Fraunces:wght@700&display=swap" rel="stylesheet">
+
     <style>
-        :root{
-            --bg:#070810;--bg2:#0c0e1a;--bg3:#111422;--bg4:#181c2e;--surface:#1d2138;
-            --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
-            --tv:#60a5fa;--tv-glow:rgba(96,165,250,0.14);--tv-dim:rgba(96,165,250,0.07);
-            --radio:#fb923c;--radio-glow:rgba(251,146,60,0.14);--radio-dim:rgba(251,146,60,0.07);
-            --text:#e8eaf6;--text2:#8b90b0;--text3:#4b5070;--red:#f87171;
+        /* =========================================================
+           1. THEME COLOURS
+           Change these to re-colour the whole app.
+           ========================================================= */
+        :root {
+            --bg:      #070810;   /* page background            */
+            --bg2:     #0c0e1a;   /* sidebar                    */
+            --bg3:     #111422;   /* hover / tab background     */
+            --bg4:     #181c2e;   /* logo boxes                 */
+            --surface: #1d2138;   /* active tab, slider track   */
+            --border:  rgba(255,255,255,0.06);
+            --border2: rgba(255,255,255,0.11);
+            --text:    #e8eaf6;
+            --muted:   #4b5070;
+            --red:     #f87171;   /* "LIVE" indicator           */
+
+            --tv:      #60a5fa;   /* TV accent (blue)           */
+            --tv-dim:  rgba(96,165,250,0.07);
+            --radio:   #fb923c;   /* Radio accent (orange)      */
+            --radio-dim: rgba(251,146,60,0.07);
+
+            /* The current accent. Switches to orange in radio mode (see section 7). */
+            --accent:     var(--tv);
+            --accent-dim: var(--tv-dim);
         }
-        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-        html,body{height:100%;overflow:hidden}
-        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:row}
-        body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
 
-        /* SIDEBAR */
-        .sidebar{width:272px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-        .sb-top{padding:1.35rem 1.35rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;flex-shrink:0}
-        .brand-gem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#60a5fa 0%,#818cf8 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-        .brand-gem svg{width:16px;height:16px;color:#fff}
-        .brand-name{font-weight:800;font-size:.92rem;letter-spacing:-.01em;line-height:1;color:var(--text)}
-        .brand-tag{font-size:.62rem;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+        /* =========================================================
+           2. RESET & PAGE LAYOUT
+           Desktop: sidebar on the left, player on the right.
+           ========================================================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            display: flex;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        body.radio-mode {
+            --accent: var(--radio);
+            --accent-dim: var(--radio-dim);
+        }
 
-        .tabs{display:flex;margin:.9rem;background:var(--bg3);border-radius:10px;padding:3px;border:1px solid var(--border);position:relative;flex-shrink:0}
-        .tab-pill{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:8px;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.3);transition:transform .28s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:0}
-        .tab-pill.s{transform:translateX(100%)}
-        .tab-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.52rem .5rem;border:none;background:transparent;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.76rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);transition:color .2s;position:relative;z-index:1}
-        .tab-btn svg{width:13px;height:13px}
-        .tab-btn.on-tv{color:var(--tv)}
-        .tab-btn.on-radio{color:var(--radio)}
+        /* =========================================================
+           3. SIDEBAR
+           ========================================================= */
+        .sidebar {
+            width: 272px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+        }
 
-        .ch-scroll{flex:1;overflow-y:auto;padding:.4rem .65rem 1rem;min-height:0}
-        .ch-scroll::-webkit-scrollbar{width:2px}
-        .ch-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
-        .list-lbl{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:.7rem .5rem .3rem}
-        .ch-ul{list-style:none;display:flex;flex-direction:column;gap:1px}
-        .chi{display:flex;align-items:center;gap:.75rem;padding:.6rem .7rem;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:background .14s,border-color .14s,transform .1s;user-select:none}
-        .chi:hover{background:var(--bg3);transform:translateX(3px)}
-        .chi.stv{background:var(--tv-dim);border-color:rgba(96,165,250,.22)}
-        .chi.srd{background:var(--radio-dim);border-color:rgba(251,146,60,.22)}
-        .ch-logo{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center}
-        .ch-logo img{width:100%;height:100%;object-fit:cover;display:block}
-        .ch-abbr{font-size:.68rem;font-weight:800;color:var(--radio);text-align:center;line-height:1.15;padding:2px}
-        .ch-abbr-tv{font-size:.62rem;font-weight:800;color:var(--tv);text-align:center;line-height:1.15;padding:2px}
-        .ch-meta{flex:1;overflow:hidden}
-        .ch-name{font-weight:600;font-size:.845rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
-        .ch-sub{font-size:.65rem;color:var(--text3);margin-top:1px;display:flex;align-items:center;gap:4px}
-        .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex-shrink:0;animation:blink 1.6s ease-in-out infinite}
-        .dot-r{background:var(--radio)}
-        .lbl-live{color:var(--red);font-weight:700;letter-spacing:.04em}
-        @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+        /* --- Brand (logo + name) --- */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            padding: 1.35rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .brand-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #60a5fa, #818cf8);
+            color: #fff;
+        }
+        .brand-icon svg { width: 16px; height: 16px; }
+        .brand-name { font-weight: 800; font-size: .92rem; }
+        .brand-tag  { font-size: .62rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
 
-        /* MAIN */
-        .main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;min-width:0}
-        .glow{position:absolute;border-radius:50%;pointer-events:none;filter:blur(90px);transition:all .5s}
-        .g1{width:500px;height:350px;top:-100px;right:50px;background:radial-gradient(circle,rgba(96,165,250,.055) 0%,transparent 70%)}
-        .g2{width:350px;height:350px;bottom:-60px;left:20px;background:radial-gradient(circle,rgba(129,140,248,.04) 0%,transparent 70%)}
-        .main.radio .g1{background:radial-gradient(circle,rgba(251,146,60,.065) 0%,transparent 70%)}
-        .main.radio .g2{background:radial-gradient(circle,rgba(251,146,60,.035) 0%,transparent 70%)}
+        /* --- TV / Radio tab switch --- */
+        .tabs {
+            position: relative;
+            display: flex;
+            margin: .9rem;
+            padding: 3px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        /* The sliding highlight behind the active tab */
+        .tab-pill {
+            position: absolute;
+            top: 3px; left: 3px;
+            width: calc(50% - 3px);
+            height: calc(100% - 6px);
+            background: var(--surface);
+            border-radius: 8px;
+            transition: transform .28s cubic-bezier(.34,1.56,.64,1);
+        }
+        body.radio-mode .tab-pill { transform: translateX(100%); }
 
-        /* TOPBAR */
-        .topbar{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.4rem;gap:.9rem;background:rgba(7,8,16,.55);backdrop-filter:blur(16px);position:relative;z-index:5;flex-shrink:0}
-        .tb-logo{width:26px;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4);border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
-        .tb-logo img{width:100%;height:100%;object-fit:cover}
-        .tb-logo-txt{font-size:.58rem;font-weight:800;color:var(--radio);text-align:center}
-        .tb-name{font-weight:700;font-size:.88rem;color:var(--text)}
-        .tb-badge{display:flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-        .b-live{background:rgba(248,113,113,.08);color:var(--red);border:1px solid rgba(248,113,113,.18)}
-        .b-onair{background:var(--radio-dim);color:var(--radio);border:1px solid rgba(251,146,60,.2);display:none}
-        .tb-sp{flex:1}
+        .tab-btn {
+            position: relative;           /* sits above the pill */
+            flex: 1;
+            display: flex; align-items: center; justify-content: center; gap: .4rem;
+            padding: .52rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font: 700 .76rem 'Outfit', sans-serif;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            color: var(--muted);
+            transition: color .2s;
+        }
+        .tab-btn svg { width: 13px; height: 13px; }
+        .tab-btn.active { color: var(--accent); }
 
-        /* STAGE */
-        .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem 2rem;overflow:hidden;position:relative;min-height:0}
+        /* --- Channel / station list --- */
+        .list {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            list-style: none;
+            padding: .4rem .65rem 1rem;
+        }
+        .list::-webkit-scrollbar { width: 2px; height: 2px; }
+        .list::-webkit-scrollbar-thumb { background: var(--border2); }
 
-        /* TV PLAYER */
-        .tv-wrap{width:100%;max-width:1100px;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--border2),0 32px 72px rgba(0,0,0,.65),0 0 100px var(--tv-glow);position:relative}
-        .tv-wrap video{width:100%;height:100%;border:none;display:block;object-fit:contain}
-        .tv-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block}
+        .item {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .6rem .7rem;
+            margin-bottom: 1px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: background .14s, transform .1s;
+        }
+        .item:hover    { background: var(--bg3); transform: translateX(3px); }
+        .item.selected { background: var(--accent-dim); border-color: var(--accent); }
 
-        /* loading spinner */
-        .tv-loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;background:rgba(7,8,16,.75);z-index:3;transition:opacity .4s}
-        .tv-loader.hidden{opacity:0;pointer-events:none}
-        .spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--tv);border-radius:50%;animation:spin .7s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .loader-txt{font-size:.72rem;color:var(--text3);letter-spacing:.06em}
+        .item-name { font-weight: 600; font-size: .845rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-sub  { font-size: .65rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+        .item-live { color: var(--red); font-weight: 700; }
 
-        /* RADIO orb */
-        .radio-wrap{display:none;flex-direction:column;align-items:center;gap:2.2rem;width:100%;max-width:420px}
-        .orb-scene{position:relative;display:flex;align-items:center;justify-content:center}
-        .wave{position:absolute;border-radius:50%;border:1px solid rgba(251,146,60,.12);animation:wave 3s ease-out infinite;opacity:0}
-        .wave.w1{width:190px;height:190px;animation-delay:0s}
-        .wave.w2{width:255px;height:255px;animation-delay:.85s}
-        .wave.w3{width:320px;height:320px;animation-delay:1.7s}
-        .wave.stop{animation-play-state:paused;opacity:0}
-        @keyframes wave{0%{transform:scale(.88);opacity:.55}100%{transform:scale(1.04);opacity:0}}
-        .orb{width:155px;height:155px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(251,146,60,.05);transition:box-shadow .35s}
-        .orb.on{box-shadow:0 0 70px rgba(251,146,60,.22),0 0 0 1px rgba(251,146,60,.28)}
-        .orb-inner{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden}
-        .orb-inner img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-        .orb-txt{font-size:1.35rem;font-weight:900;color:var(--radio)}
-        .st-name{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1;text-align:center}
-        .st-genre{font-size:.78rem;color:var(--text3);margin-top:.35rem;letter-spacing:.06em;text-transform:uppercase;text-align:center}
-        .r-ctrls{display:flex;align-items:center;gap:1.1rem}
-        .vol-row{display:flex;align-items:center;gap:.45rem;color:var(--text3)}
-        .vol-row svg{width:15px;height:15px;flex-shrink:0}
-        .vol-range{-webkit-appearance:none;width:88px;height:3px;background:var(--surface);border-radius:3px;outline:none;cursor:pointer}
-        .vol-range::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--radio);border-radius:50%;cursor:pointer;box-shadow:0 0 6px rgba(251,146,60,.4)}
-        .play-btn{width:56px;height:56px;border-radius:50%;background:var(--radio);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 6px 22px rgba(251,146,60,.35);transition:transform .18s,box-shadow .18s}
-        .play-btn:hover{transform:scale(1.08);box-shadow:0 8px 30px rgba(251,146,60,.5)}
-        .play-btn:active{transform:scale(.96)}
-        .play-btn svg{width:21px;height:21px}
+        /* --- Logo box (used in list + top bar). Shows image, or initials if image is missing --- */
+        .logo {
+            width: 40px; height: 40px;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            background: var(--bg4);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+        }
+        .logo img { width: 100%; height: 100%; object-fit: cover; }
+        .initials { font-size: .65rem; font-weight: 800; color: var(--accent); }
 
-        /* RADIO iframe */
-        .radio-iframe{display:none;width:100%;max-width:500px;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--border2),0 24px 56px rgba(0,0,0,.55),0 0 80px var(--radio-glow)}
-        .radio-iframe iframe{display:block;width:100%;border:none}
+        /* --- Blinking red dot --- */
+        .dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--red);
+            animation: blink 1.6s ease-in-out infinite;
+        }
+        @keyframes blink { 50% { opacity: .25; } }
 
-        /* Visibility toggles */
-        .main.radio .tv-wrap{display:none}
-        .main.radio .radio-wrap{display:flex}
-        .main.radio.iframed .radio-wrap{display:none}
-        .main.radio.iframed .radio-iframe{display:block}
+        /* =========================================================
+           4. MAIN AREA (top bar + stage)
+           ========================================================= */
+        .main {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Soft coloured glow in the background, follows the accent colour */
+        .main::before {
+            content: '';
+            position: absolute;
+            top: -100px; right: 50px;
+            width: 500px; height: 350px;
+            background: radial-gradient(circle, var(--accent-dim), transparent 70%);
+            filter: blur(60px);
+            pointer-events: none;
+        }
 
-        /* ═══════════════════════
-           MOBILE ≤ 768px
-        ═══════════════════════ */
-        @media(max-width:768px){
-            body{flex-direction:column}
+        .topbar {
+            height: 52px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: .9rem;
+            padding: 0 1.4rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,8,16,.55);
+            backdrop-filter: blur(16px);
+            position: relative;
+        }
+        .topbar .logo { width: 26px; height: 26px; border-radius: 6px; }
+        .topbar-name  { font-weight: 700; font-size: .88rem; }
 
-            .sidebar{
-                width:100%;height:auto;
-                flex-direction:column;
-                border-right:none;
-                border-bottom:1px solid var(--border);
-                flex-shrink:0;
+        /* "LIVE" (TV) / "ON AIR" (radio) badge */
+        .badge {
+            display: flex; align-items: center; gap: 5px;
+            padding: 2px 9px;
+            border-radius: 20px;
+            font-size: .62rem; font-weight: 700;
+            letter-spacing: .06em; text-transform: uppercase;
+            color: var(--red);
+            background: rgba(248,113,113,.08);
+            border: 1px solid rgba(248,113,113,.18);
+        }
+        body.radio-mode .badge {
+            color: var(--radio);
+            background: var(--radio-dim);
+            border-color: rgba(251,146,60,.2);
+        }
+        body.radio-mode .badge .dot { background: var(--radio); }
+
+        .stage {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 2rem;
+            position: relative;
+        }
+
+        /* =========================================================
+           5. TV PLAYER
+           ========================================================= */
+        .tv {
+            position: relative;
+            width: 100%;
+            max-width: 1100px;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #000;
+            border-radius: 16px;
+            box-shadow: 0 0 0 1px var(--border2), 0 32px 72px rgba(0,0,0,.65);
+        }
+        /* Video or iframe fills the whole player */
+        .tv video, .tv iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            border: none;
+            object-fit: contain;
+        }
+
+        /* Loading spinner shown over the player until the stream starts */
+        .loader {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+            background: rgba(7,8,16,.75);
+            font-size: .72rem; color: var(--muted);
+            transition: opacity .4s;
+        }
+        .loader.hidden { opacity: 0; pointer-events: none; }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid var(--border2);
+            border-top-color: var(--tv);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* =========================================================
+           6. RADIO PLAYER (logo orb + controls)
+           ========================================================= */
+        .radio {
+            display: none;               /* shown only in radio mode */
+            flex-direction: column;
+            align-items: center;
+            gap: 2.2rem;
+            text-align: center;
+        }
+
+        /* Orb with expanding rings while playing */
+        .orb-scene { position: relative; display: flex; align-items: center; justify-content: center; }
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(251,146,60,.12);
+            opacity: 0;
+        }
+        .ring:nth-child(1) { width: 190px; height: 190px; }
+        .ring:nth-child(2) { width: 255px; height: 255px; }
+        .ring:nth-child(3) { width: 320px; height: 320px; }
+        /* Rings only animate while audio is playing, each one starting a bit later */
+        .playing .ring { animation: ring 3s ease-out infinite; }
+        .playing .ring:nth-child(2) { animation-delay: .85s; }
+        .playing .ring:nth-child(3) { animation-delay: 1.7s; }
+        @keyframes ring {
+            0%   { transform: scale(.88); opacity: .55; }
+            100% { transform: scale(1.04); opacity: 0; }
+        }
+
+        .orb {
+            width: 155px; height: 155px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg3);
+            border: 1px solid var(--border2);
+            transition: box-shadow .35s;
+        }
+        .playing .orb { box-shadow: 0 0 70px rgba(251,146,60,.22), 0 0 0 1px rgba(251,146,60,.28); }
+        .orb .logo { width: 88px; height: 88px; border-radius: 50%; border: none; }
+        .orb .initials { font-size: 1.35rem; }
+
+        .station-name  { font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 700; }
+        .station-genre { font-size: .78rem; color: var(--muted); margin-top: .35rem; letter-spacing: .06em; text-transform: uppercase; }
+
+        .controls { display: flex; align-items: center; gap: 1.1rem; color: var(--muted); }
+        .controls > svg { width: 15px; height: 15px; }
+
+        /* Volume slider */
+        .volume {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 88px; height: 3px;
+            background: var(--surface);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .volume::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 13px; height: 13px;
+            border-radius: 50%;
+            background: var(--radio);
+        }
+
+        /* Play / pause button */
+        .play-btn {
+            width: 56px; height: 56px;
+            border: none;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--radio);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 6px 22px rgba(251,146,60,.35);
+            transition: transform .18s;
+        }
+        .play-btn:hover  { transform: scale(1.08); }
+        .play-btn:active { transform: scale(.96); }
+        .play-btn svg    { width: 21px; height: 21px; }
+
+        /* =========================================================
+           7. MODE SWITCHING
+           <body class="radio-mode"> hides the TV and shows the radio.
+           ========================================================= */
+        body.radio-mode .tv    { display: none; }
+        body.radio-mode .radio { display: flex; }
+
+        /* =========================================================
+           8. MOBILE (screens 768px wide or less)
+           Sidebar becomes a top bar with a horizontal channel strip.
+           ========================================================= */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+            .brand   { display: none; }
+            .tabs    { margin: .6rem .6rem .4rem; }
+
+            /* Horizontal scrolling list of small cards */
+            .list {
+                flex: none;
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: .3rem .6rem .6rem;
+                scroll-snap-type: x mandatory;
             }
-            .sb-top{display:none}
-            .tabs{margin:.6rem .6rem .4rem;flex-shrink:0}
-
-            /* horizontal scrollable channel strip */
-            .ch-scroll{
-                flex:none;
-                overflow-y:hidden;
-                overflow-x:auto;
-                padding:.3rem .6rem .6rem;
-                scroll-snap-type:x mandatory;
-                -webkit-overflow-scrolling:touch;
+            .item {
+                flex-direction: column;
+                gap: .3rem;
+                min-width: 68px; max-width: 68px;
+                padding: .5rem .3rem;
+                border-radius: 12px;
+                text-align: center;
+                scroll-snap-align: start;
             }
-            .ch-scroll::-webkit-scrollbar{height:2px}
-            .ch-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-            .list-lbl{display:none}
+            .item:hover { transform: none; }
+            .item .logo { width: 34px; height: 34px; }
+            .item-name  { font-size: .58rem; font-weight: 700; white-space: normal; line-height: 1.2; }
+            .item-sub   { display: none; }
 
-            /* channel cards stacked vertically inside horizontal scroll */
-            .ch-ul{flex-direction:row;gap:6px;align-items:stretch}
-            .chi{
-                flex-direction:column;
-                align-items:center;
-                text-align:center;
-                min-width:68px;
-                max-width:68px;
-                padding:.5rem .3rem .45rem;
-                border-radius:12px;
-                gap:.3rem;
-                scroll-snap-align:start;
-                transform:none !important;
-            }
-            .chi:hover{background:var(--bg3);transform:none !important}
-            .ch-logo{width:34px;height:34px;border-radius:8px}
-            .ch-meta{overflow:visible;width:100%}
-            .ch-name{
-                font-size:.58rem;font-weight:700;
-                white-space:normal;line-height:1.2;
-                overflow:visible;text-overflow:unset;
-                text-align:center;
-            }
-            .ch-sub{display:none}
+            .main::before { display: none; }
+            .topbar       { height: 42px; padding: 0 .9rem; gap: .6rem; }
+            .topbar-name  { font-size: .78rem; }
+            .stage        { padding: .7rem; }
+            .tv           { border-radius: 10px; }
 
-            /* main area */
-            .main{flex:1;min-height:0}
-            .glow{display:none}
-            .topbar{height:42px;padding:0 .9rem;gap:.6rem}
-            .tb-name{font-size:.78rem}
-            .tb-badge{padding:2px 7px;font-size:.58rem}
-
-            /* stage fills remaining space */
-            .stage{
-                padding:.7rem;
-                align-items:center;
-                justify-content:center;
-            }
-
-            /* video player: 16:9, fills width */
-            .tv-wrap{
-                width:100%;
-                max-width:100%;
-                aspect-ratio:16/9;
-                border-radius:10px;
-                align-self:center;
-            }
-
-            /* radio */
-            .radio-iframe{max-width:100%}
-            .radio-wrap{max-width:100%;padding:0 .5rem;gap:1.4rem}
-            .orb{width:120px;height:120px}
-            .orb-inner{width:68px;height:68px}
-            .wave.w1{width:148px;height:148px}
-            .wave.w2{width:198px;height:198px}
-            .wave.w3{width:248px;height:248px}
-            .st-name{font-size:1.45rem}
-            .vol-range{width:70px}
-            .play-btn{width:50px;height:50px}
+            /* Smaller radio orb */
+            .radio { gap: 1.4rem; }
+            .orb   { width: 120px; height: 120px; }
+            .orb .logo { width: 68px; height: 68px; }
+            .ring:nth-child(1) { width: 148px; height: 148px; }
+            .ring:nth-child(2) { width: 198px; height: 198px; }
+            .ring:nth-child(3) { width: 248px; height: 248px; }
+            .station-name { font-size: 1.45rem; }
+            .volume       { width: 70px; }
+            .play-btn     { width: 50px; height: 50px; }
         }
     </style>
 </head>
 <body>
 
+<!-- ============================ SIDEBAR ============================ -->
 <aside class="sidebar">
-    <div class="sb-top">
-        <div class="brand-gem">
+    <div class="brand">
+        <div class="brand-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
             </svg>
@@ -234,325 +444,313 @@
     </div>
 
     <div class="tabs">
-        <div class="tab-pill" id="pill"></div>
-        <button class="tab-btn on-tv" id="tvBtn" onclick="switchTo('tv')">
+        <div class="tab-pill"></div>
+        <button class="tab-btn active" id="tvTab" onclick="switchMode('tv')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
             </svg>TV
         </button>
-        <button class="tab-btn" id="rdBtn" onclick="switchTo('radio')">
+        <button class="tab-btn" id="radioTab" onclick="switchMode('radio')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M2.5 17a24.12 24.12 0 0 1 0-10"/><path d="M5.5 13.7a10 10 0 0 1 0-3.4"/><circle cx="12" cy="12" r="2"/><path d="M18.5 13.7a10 10 0 0 0 0-3.4"/><path d="M21.5 17a24.12 24.12 0 0 0 0-10"/>
             </svg>Radio
         </button>
     </div>
 
-    <div class="ch-scroll" id="tvPane">
-        <div class="list-lbl">Channels</div>
-        <ul class="ch-ul" id="tvUl"></ul>
-    </div>
-    <div class="ch-scroll" id="rdPane" style="display:none">
-        <div class="list-lbl">Stations</div>
-        <ul class="ch-ul" id="rdUl"></ul>
-    </div>
+    <!-- Filled in by JavaScript from TV_CHANNELS / RADIO_STATIONS -->
+    <ul class="list" id="tvList"></ul>
+    <ul class="list" id="radioList" hidden></ul>
 </aside>
 
-<main class="main" id="M">
-    <div class="glow g1"></div>
-    <div class="glow g2"></div>
-
+<!-- ============================ MAIN ============================ -->
+<main class="main">
     <div class="topbar">
-        <div class="tb-logo" id="tbLogo"></div>
-        <span class="tb-name" id="tbName">—</span>
-        <div class="tb-badge b-live" id="bLive"><span class="dot"></span>Live</div>
-        <div class="tb-badge b-onair" id="bAir"><span class="dot dot-r"></span>On Air</div>
-        <div class="tb-sp"></div>
+        <div class="logo" id="topLogo"></div>
+        <span class="topbar-name" id="topName">—</span>
+        <div class="badge"><span class="dot"></span><span id="badgeText">Live</span></div>
     </div>
 
     <div class="stage">
-        <div class="tv-wrap" id="tvWrap">
-            <div class="tv-loader" id="tvLoader">
+        <!-- TV player: a <video> or <iframe> is inserted here by playTV() -->
+        <div class="tv" id="tvPlayer">
+            <div class="loader" id="loader">
                 <div class="spinner"></div>
-                <div class="loader-txt">Loading stream…</div>
+                Loading stream…
             </div>
         </div>
 
-        <div class="radio-wrap" id="rdWrap">
+        <!-- Radio player -->
+        <div class="radio" id="radioPlayer">
             <div class="orb-scene">
-                <div class="wave w1 stop" id="w1"></div>
-                <div class="wave w2 stop" id="w2"></div>
-                <div class="wave w3 stop" id="w3"></div>
-                <div class="orb" id="orb"><div class="orb-inner" id="orbIn"></div></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="orb"><div class="logo" id="orbLogo"></div></div>
             </div>
             <div>
-                <div class="st-name" id="stName">Select a Station</div>
-                <div class="st-genre" id="stGenre">Kurdish Radio</div>
+                <div class="station-name"  id="stationName">Select a Station</div>
+                <div class="station-genre" id="stationGenre">Kurdish Radio</div>
             </div>
-            <div class="r-ctrls">
-                <div class="vol-row">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                    <input type="range" class="vol-range" id="vol" min="0" max="1" step="0.02" value="0.85" oninput="setVol(this.value)">
-                </div>
-                <button class="play-btn" id="playBtn" onclick="togglePlay()">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                </button>
+            <div class="controls">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <input type="range" class="volume" id="volume" min="0" max="1" step="0.02" value="0.85">
+                <button class="play-btn" id="playBtn" onclick="toggleRadio()"></button>
             </div>
         </div>
-
-        <div class="radio-iframe" id="rdIframe"></div>
     </div>
 </main>
 
-<audio id="aud" preload="none"></audio>
+<!-- One shared audio element plays every radio station -->
+<audio id="audio" preload="none"></audio>
 
 <script>
-// ── CHANNEL DATA ──────────────────────────────────────────
-const TV=[
-    // Rudaw: direct HLS — their CDN stream
-    {name:'Rudaw',    logo:'image_0.png', type:'hls', url:'https://live.rudaw.net/hls/rudaw-tv/master.m3u8',
-     // fallback embed if HLS fails
-     fallbackHtml:'<iframe src="https://www.rudaw.net/en/livetv" allowfullscreen allow="autoplay" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"></iframe>'},
-    {name:'Ronahi TV',logo:'image_3.png', type:'hls', url:'https://hlspackager.akamaized.net/live/DB/RONAHI_TV/HLS/RONAHI_TV.m3u8'},
-    {name:'Channel 8',logo:'image_4.png', type:'hls', url:'https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8'},
-    {name:'Ava Media',logo:'image_1.png', type:'iframe', html:'<iframe allow="fullscreen;autoplay" src="https://avamedia.live" frameborder="0" scrolling="no" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;"></iframe>'},
-    {name:'Shams TV', logo:'image_2.png', type:'hls', url:'https://stream.shams.tv/hls/0/stream.m3u8'},
-    {name:'Welat TV', logo:'image_5.png',
-     type:'hls', url:'https://stream.badinan.xyz/welat/tv/playlist.m3u8'},
-    {name:'Nuce TV',  logo:'image_6.png', type:'hls', url:'https://hlspackager.akamaized.net/live/DB/NU_TV/HLS/NU_TV.m3u8'}
+/* =================================================================
+   1. CHANNELS & STATIONS
+   To add a channel, copy a line and change it.
+     type 'hls'    → url is an .m3u8 live stream (best quality, plays in our own player)
+     type 'iframe' → url is a web page that is embedded as-is
+     fallback      → (optional) web page to embed if the HLS stream fails
+     logo          → image file next to this HTML file; if missing, initials are shown
+   ================================================================= */
+const TV_CHANNELS = [
+    { name: 'Rudaw',     logo: 'image_0.png', type: 'hls',    url: 'https://live.rudaw.net/hls/rudaw-tv/master.m3u8',
+      fallback: 'https://www.rudaw.net/en/livetv' },
+    { name: 'Ronahi TV', logo: 'image_3.png', type: 'hls',    url: 'https://hlspackager.akamaized.net/live/DB/RONAHI_TV/HLS/RONAHI_TV.m3u8' },
+    { name: 'Channel 8', logo: 'image_4.png', type: 'hls',    url: 'https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8' },
+    { name: 'Ava Media', logo: 'image_1.png', type: 'iframe', url: 'https://avamedia.live' },
+    { name: 'Shams TV',  logo: 'image_2.png', type: 'hls',    url: 'https://stream.shams.tv/hls/0/stream.m3u8' },
+    { name: 'Welat TV',  logo: 'image_5.png', type: 'hls',    url: 'https://stream.badinan.xyz/welat/tv/playlist.m3u8' },
+    { name: 'Nuce TV',   logo: 'image_6.png', type: 'hls',    url: 'https://hlspackager.akamaized.net/live/DB/NU_TV/HLS/NU_TV.m3u8' },
 ];
 
-const RD=[
-    {name:'Arta FM',     genre:'Music & Entertainment', abbr:'AF', logo:'Artafm_7.png',
-     type:'stream', url:'https://edge.mixlr.com/channel/qtgru'},
-    {name:'Kurd1 Radyo', genre:'Kurdish Hits',          abbr:'K1', logo:'Kurd1rayo_6.png',
-     type:'iframe', src:'https://listen.radioking.com/radio/119251/stream/158701', h:365}
+// Radio stations are direct audio stream URLs. The first one plays when the Radio tab opens.
+const RADIO_STATIONS = [
+    { name: 'Arta FM',     genre: 'Music & Entertainment', logo: 'Artafm_7.png',    url: 'https://edge.mixlr.com/channel/qtgru' },
+    { name: 'Kurd1 Radyo', genre: 'Kurdish Hits',          logo: 'Kurd1rayo_6.png', url: 'https://listen.radioking.com/radio/119251/stream/158701' },
 ];
 
-// ── HLS CONFIG — optimised for fast live startup ──────────
-const HLS_CFG={
-    enableWorker:true,
-    lowLatencyMode:true,
-    liveSyncDurationCount:1,
-    liveMaxLatencyDurationCount:4,
-    maxBufferLength:10,
-    maxMaxBufferLength:20,
-    maxBufferSize:15*1000*1000,
-    maxBufferHole:0.5,
-    startFragPrefetch:true,
-    startLevel:-1,
-    abrEwmaDefaultEstimate:2000000,
-    fragLoadingMaxRetry:5,
-    manifestLoadingMaxRetry:4,
-    levelLoadingMaxRetry:4,
-    fragLoadingRetryDelay:800,
-    manifestLoadingRetryDelay:500,
+// hls.js settings tuned for quick start-up of live streams
+const HLS_CONFIG = {
+    lowLatencyMode: true,
+    liveSyncDurationCount: 1,      // start close to the live edge
+    maxBufferLength: 10,           // seconds of video to buffer ahead
+    startFragPrefetch: true,
+    manifestLoadingMaxRetry: 4,
+    fragLoadingMaxRetry: 5,
 };
 
-// ── STATE ─────────────────────────────────────────────────
-let hls=null, sec='tv', selTV=-1, selRD=-1, rPlaying=false;
-const aud=document.getElementById('aud');
+/* =================================================================
+   2. STATE
+   ================================================================= */
+let hls = null;           // active hls.js instance (TV)
+let currentTV = 0;        // index of selected TV channel
+let currentRadio = -1;    // index of selected radio station (-1 = none yet)
 
-// ── INIT ─────────────────────────────────────────────────
-function init(){
-    TV.forEach((c,i)=>{
-        const li=document.createElement('li');
-        li.className='chi'; li.id='tv'+i; li.onclick=()=>playTV(i);
-        const logoHtml=c.logo
-            ?`<img src="${c.logo}" alt="${c.name}" onerror="this.style.display='none'">`
-            :`<div class="ch-abbr-tv">${c.name.split(' ').map(w=>w[0]).join('')}</div>`;
-        li.innerHTML=`<div class="ch-logo">${logoHtml}</div><div class="ch-meta"><div class="ch-name">${c.name}</div><div class="ch-sub"><span class="dot"></span><span class="lbl-live">LIVE</span></div></div>`;
-        document.getElementById('tvUl').appendChild(li);
-    });
-    RD.forEach((c,i)=>{
-        const li=document.createElement('li');
-        li.className='chi'; li.id='rd'+i; li.onclick=()=>pickRD(i);
-        const logoHtml=c.logo
-            ?`<img src="${c.logo}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.replaceWith(mkAbbr('${c.abbr}'))">`
-            :`<div class="ch-abbr">${c.abbr}</div>`;
-        li.innerHTML=`<div class="ch-logo">${logoHtml}</div><div class="ch-meta"><div class="ch-name">${c.name}</div><div class="ch-sub">${c.genre}</div></div>`;
-        document.getElementById('rdUl').appendChild(li);
-    });
-    playTV(0);
+const $ = id => document.getElementById(id);
+const audio = $('audio');
+
+/* =================================================================
+   3. HELPERS
+   ================================================================= */
+
+// "Ronahi TV" → "RT"
+function initials(name) {
+    return name.split(' ').map(word => word[0]).join('');
 }
 
-function mkAbbr(txt){
-    const d=document.createElement('div');
-    d.className='ch-abbr'; d.textContent=txt; return d;
+// HTML for a logo: the image, which swaps itself for initials if the file can't load
+function logoHtml(item) {
+    const fallback = `<span class="initials">${initials(item.name)}</span>`;
+    if (!item.logo) return fallback;
+    return `<img src="${item.logo}" alt="${item.name}" onerror="this.outerHTML='${fallback.replace(/"/g, '&quot;')}'">`;
 }
 
-// ── SECTION SWITCH ────────────────────────────────────────
-function switchTo(s){
-    sec=s; const r=s==='radio';
-    document.getElementById('pill').classList.toggle('s',r);
-    document.getElementById('tvBtn').className='tab-btn'+(r?'':' on-tv');
-    document.getElementById('rdBtn').className='tab-btn'+(r?' on-radio':'');
-    document.getElementById('tvPane').style.display=r?'none':'';
-    document.getElementById('rdPane').style.display=r?'':'none';
-    const m=document.getElementById('M');
-    m.classList.toggle('radio',r);
-    document.getElementById('bLive').style.display=r?'none':'';
-    document.getElementById('bAir').style.display=r?'':'none';
-    if(r){
-        stopHLS();
-        clearTVWrap();
-        selTV=-1;
-        if(selRD>=0) refreshRD(selRD); else pickRD(0);
+// Update the top bar with the current channel/station
+function setTopBar(item) {
+    $('topLogo').innerHTML = logoHtml(item);
+    $('topName').textContent = item.name;
+}
+
+// Highlight the selected entry in a list
+function markSelected(listId, index) {
+    [...$(listId).children].forEach((li, i) => li.classList.toggle('selected', i === index));
+}
+
+/* =================================================================
+   4. BUILD THE SIDEBAR LISTS
+   ================================================================= */
+function buildList(listId, items, subtitle, onClick) {
+    items.forEach((item, i) => {
+        const li = document.createElement('li');
+        li.className = 'item';
+        li.innerHTML = `
+            <div class="logo">${logoHtml(item)}</div>
+            <div style="overflow:hidden">
+                <div class="item-name">${item.name}</div>
+                <div class="item-sub">${subtitle(item)}</div>
+            </div>`;
+        li.onclick = () => onClick(i);
+        $(listId).appendChild(li);
+    });
+}
+
+/* =================================================================
+   5. SWITCH BETWEEN TV AND RADIO
+   ================================================================= */
+function switchMode(mode) {
+    const isRadio = mode === 'radio';
+
+    document.body.classList.toggle('radio-mode', isRadio);
+    $('tvTab').classList.toggle('active', !isRadio);
+    $('radioTab').classList.toggle('active', isRadio);
+    $('tvList').hidden = isRadio;
+    $('radioList').hidden = !isRadio;
+    $('badgeText').textContent = isRadio ? 'On Air' : 'Live';
+
+    if (isRadio) {
+        stopTV();
+        playRadio(currentRadio < 0 ? 0 : currentRadio);   // Arta FM first time
     } else {
-        aud.pause(); rPlaying=false;
-        m.classList.remove('iframed');
-        if(selTV===-1) playTV(0); else playTV(selTV);
+        audio.pause();
+        playTV(currentTV);
     }
 }
 
-// ── TV ────────────────────────────────────────────────────
-function stopHLS(){
-    if(hls){hls.destroy();hls=null;}
-}
+/* =================================================================
+   6. TV
+   ================================================================= */
 
-function clearTVWrap(){
-    const w=document.getElementById('tvWrap');
-    Array.from(w.children).forEach(el=>{
-        if(!el.classList.contains('tv-loader')) el.remove();
-    });
+// Remove whatever is playing and show the spinner
+function stopTV() {
+    if (hls) { hls.destroy(); hls = null; }
+    $('tvPlayer').querySelectorAll('video, iframe').forEach(el => el.remove());
     showLoader(true);
 }
 
-function showLoader(show){
-    const l=document.getElementById('tvLoader');
-    if(l) l.classList.toggle('hidden',!show);
+function showLoader(visible) {
+    $('loader').classList.toggle('hidden', !visible);
 }
 
-function playTV(i){
-    const c=TV[i]; selTV=i;
-    document.querySelectorAll('#tvUl .chi').forEach(e=>e.classList.remove('stv'));
-    document.getElementById('tv'+i).classList.add('stv');
-    setTB(c.logo,c.name,'img',c.name.split(' ').map(w=>w[0]).join(''));
-    stopHLS();
-    clearTVWrap();
+// Embed a web page in the player
+function showIframe(url) {
+    const frame = document.createElement('iframe');
+    frame.src = url;
+    frame.allow = 'autoplay; fullscreen';
+    frame.allowFullscreen = true;
+    frame.onload = () => showLoader(false);
+    $('tvPlayer').appendChild(frame);
+}
 
-    const w=document.getElementById('tvWrap');
+function playTV(index) {
+    const channel = TV_CHANNELS[index];
+    currentTV = index;
+    markSelected('tvList', index);
+    setTopBar(channel);
+    stopTV();
 
-    if(c.type==='iframe'){
-        w.insertAdjacentHTML('beforeend',c.html);
-        setTimeout(()=>showLoader(false),1800);
+    if (channel.type === 'iframe') {
+        showIframe(channel.url);
         return;
     }
 
-    // HLS path
-    const v=document.createElement('video');
-    v.controls=true; v.autoplay=true; v.playsInline=true;
-    v.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain';
-    w.appendChild(v);
+    // HLS stream → our own <video> player
+    const video = document.createElement('video');
+    video.controls = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    $('tvPlayer').appendChild(video);
 
-    if(Hls.isSupported()){
-        hls=new Hls(HLS_CFG);
-        hls.loadSource(c.url);
-        hls.attachMedia(v);
-        hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+    if (window.Hls && Hls.isSupported()) {
+        // Chrome, Firefox, Edge, Android
+        hls = new Hls(HLS_CONFIG);
+        hls.loadSource(channel.url);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
             showLoader(false);
-            v.play().catch(()=>{});
+            video.play().catch(() => {});   // autoplay may be blocked; user can press play
         });
-        hls.on(Hls.Events.ERROR,(evt,d)=>{
-            if(!d.fatal) return;
-            if(d.type===Hls.ErrorTypes.NETWORK_ERROR){
-                // try to recover; if channel has a fallback, use it
-                console.warn('HLS network error — attempting recovery');
-                hls.startLoad();
-                // after 5s with no MANIFEST_PARSED, fall back to iframe if available
-                if(c.fallbackHtml){
-                    setTimeout(()=>{
-                        const l=document.getElementById('tvLoader');
-                        if(l&&!l.classList.contains('hidden')) return; // already loaded
-                        stopHLS();
-                        clearTVWrap();
-                        w.insertAdjacentHTML('beforeend',c.fallbackHtml);
-                        setTimeout(()=>showLoader(false),1800);
-                    },5000);
-                }
-            } else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){
-                hls.recoverMediaError();
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+            if (!data.fatal) return;                         // hls.js handles minor errors itself
+            if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                hls.recoverMediaError();                     // decoding hiccup → try to recover
             } else {
-                // hard fatal — retry once after 3s
-                stopHLS();
-                setTimeout(()=>{ if(selTV===i) playTV(i); },3000);
+                handleStreamFailure(channel, index);
             }
         });
-    } else if(v.canPlayType('application/vnd.apple.mpegurl')){
-        // Safari native HLS
-        v.src=c.url;
-        v.addEventListener('loadedmetadata',()=>{ showLoader(false); v.play(); });
-        v.addEventListener('error',()=>{
-            if(c.fallbackHtml){ stopHLS(); clearTVWrap(); w.insertAdjacentHTML('beforeend',c.fallbackHtml); setTimeout(()=>showLoader(false),1800); }
-        });
-    }
-}
-
-// ── RADIO ─────────────────────────────────────────────────
-function pickRD(i){
-    const c=RD[i];
-    aud.pause(); rPlaying=false; setBtnState(false); setWaves(false);
-    selRD=i;
-    document.querySelectorAll('#rdUl .chi').forEach(e=>e.classList.remove('srd'));
-    document.getElementById('rd'+i).classList.add('srd');
-    refreshRD(i);
-    const m=document.getElementById('M');
-    if(c.type==='iframe'){
-        m.classList.add('iframed');
-        document.getElementById('rdIframe').innerHTML=`<iframe src="${c.src}" style="width:100%;height:${c.h}px;border:none;display:block;" scrolling="no" allowtransparency="true" allow="autoplay"></iframe>`;
     } else {
-        m.classList.remove('iframed');
-        aud.src=c.url;
-        aud.volume=parseFloat(document.getElementById('vol').value);
-        aud.play()
-            .then(()=>{ rPlaying=true; setBtnState(true); setWaves(true); })
-            .catch(()=>{ rPlaying=false; setBtnState(false); setWaves(false); });
+        // Safari / iPhone play HLS natively
+        video.src = channel.url;
+        video.addEventListener('loadedmetadata', () => showLoader(false));
+        video.addEventListener('error', () => handleStreamFailure(channel, index));
     }
 }
 
-function refreshRD(i){
-    const c=RD[i];
-    document.getElementById('stName').textContent=c.name;
-    document.getElementById('stGenre').textContent=c.genre;
-    const orbIn=document.getElementById('orbIn');
-    orbIn.innerHTML=c.logo
-        ?`<img src="${c.logo}" alt="${c.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'orb-txt',textContent:'${c.abbr}'}))">` 
-        :`<div class="orb-txt">${c.abbr}</div>`;
-    setTB(c.logo||'',c.name,c.logo?'img':'txt',c.abbr);
-}
-
-function togglePlay(){
-    if(selRD<0||RD[selRD].type==='iframe') return;
-    if(rPlaying){ aud.pause(); rPlaying=false; setWaves(false); }
-    else { aud.play().then(()=>{ rPlaying=true; setWaves(true); }); }
-    setBtnState(rPlaying);
-}
-
-function setBtnState(on){
-    document.getElementById('playBtn').innerHTML=on
-        ?'<svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
-        :'<svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-}
-
-function setWaves(on){
-    ['w1','w2','w3'].forEach(id=>document.getElementById(id).classList.toggle('stop',!on));
-    document.getElementById('orb').classList.toggle('on',on);
-}
-
-function setVol(v){ aud.volume=parseFloat(v); }
-
-function setTB(logo,name,kind,abbr){
-    document.getElementById('tbName').textContent=name||'—';
-    const t=document.getElementById('tbLogo');
-    if(logo){
-        t.innerHTML=`<img src="${logo}" alt="${name}" style="width:100%;height:100%;object-fit:cover;border-radius:5px" onerror="this.style.display='none'">`;
-    } else if(kind==='txt'&&abbr){
-        t.innerHTML=`<div class="tb-logo-txt">${abbr}</div>`;
+// Stream failed: use the fallback page if there is one, otherwise retry in 3 seconds
+function handleStreamFailure(channel, index) {
+    stopTV();
+    if (channel.fallback) {
+        showIframe(channel.fallback);
     } else {
-        t.innerHTML='';
+        setTimeout(() => {
+            const stillWatching = currentTV === index && !document.body.classList.contains('radio-mode');
+            if (stillWatching) playTV(index);
+        }, 3000);
     }
 }
 
-init();
+/* =================================================================
+   7. RADIO
+   ================================================================= */
+const PLAY_ICON  = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+const PAUSE_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+
+function playRadio(index) {
+    const station = RADIO_STATIONS[index];
+    currentRadio = index;
+    markSelected('radioList', index);
+    setTopBar(station);
+
+    $('stationName').textContent = station.name;
+    $('stationGenre').textContent = station.genre;
+    $('orbLogo').innerHTML = logoHtml(station);
+
+    audio.src = station.url;
+    audio.play().catch(() => {});   // if autoplay is blocked, the user presses play
+}
+
+function toggleRadio() {
+    if (currentRadio < 0) return;
+    audio.paused ? audio.play() : audio.pause();
+}
+
+// Keep the button and animation in sync with the actual audio state
+function setRadioPlaying(isPlaying) {
+    $('radioPlayer').classList.toggle('playing', isPlaying);
+    $('playBtn').innerHTML = isPlaying ? PAUSE_ICON : PLAY_ICON;
+}
+audio.addEventListener('playing', () => setRadioPlaying(true));
+audio.addEventListener('pause',   () => setRadioPlaying(false));
+audio.addEventListener('error',   () => setRadioPlaying(false));
+
+// Volume slider
+audio.volume = $('volume').value;
+$('volume').oninput = e => audio.volume = e.target.value;
+
+/* =================================================================
+   8. START
+   ================================================================= */
+buildList('tvList', TV_CHANNELS,
+    () => '<span class="dot"></span><span class="item-live">LIVE</span>',
+    playTV);
+
+buildList('radioList', RADIO_STATIONS,
+    station => station.genre,
+    playRadio);
+
+setRadioPlaying(false);
+playTV(0);   // start with the first TV channel
 </script>
 </body>
 </html>
